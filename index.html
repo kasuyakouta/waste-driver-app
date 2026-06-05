@@ -970,7 +970,10 @@ body{font-family:'IBM Plex Sans JP',sans-serif;background:var(--bg);color:var(--
   <div class="sa-adm">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
       <div style="font-size:13px;color:var(--text-3);background:var(--indigo-l);border-radius:var(--rsm);padding:10px 14px;flex:1;border:1px solid #c7d2fe;">← 横スクロールで全顧客を確認 / 送信データは右端に追加されます</div>
-      <button class="btn btn-sec" style="width:auto;padding:10px 16px;font-size:14px;white-space:nowrap;flex-shrink:0;" onclick="downloadCSV()">📥 CSV出力</button>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn btn-sec" style="width:auto;padding:10px 16px;font-size:14px;white-space:nowrap;" onclick="downloadCSV()">📥 CSV出力</button>
+        <button class="btn btn-d" style="width:auto;padding:10px 14px;font-size:13px;white-space:nowrap;" onclick="clearMatrix()">🗑 リセット</button>
+      </div>
     </div>
 
     <!-- ドライバー名管理 -->
@@ -1066,6 +1069,7 @@ const LS_KEY          = "haikibutsu_v9_state";
 const LS_SITE_LIST    = "haikibutsu_site_list";
 const DEFAULT_SITES   = ['鈴木工業','青南商事','青南商事（塩釜）'];
 const LS_DRIVER_LIST  = "haikibutsu_driver_list";
+const LS_MATRIX       = "haikibutsu_matrix_records"; // 実績マトリクス永続化
 const DEFAULT_DRIVERS = ['阿部 凌太','秋元 弘樹'];
 // ============================================================
 
@@ -1989,6 +1993,17 @@ function onMemoInput(el){
   saveLocal();
 }
 
+// ── マトリクスリセット ──
+function clearMatrix(){
+  if(!confirm('実績データをすべて削除しますか？\n（この操作は取り消せません）')) return;
+  try{
+    matrixRecords.length=0;
+    localStorage.removeItem(LS_MATRIX);
+    renderMatrix();
+    showToast('🗑 実績データを削除しました');
+  }catch(e){}
+}
+
 // ── CSVダウンロード（F） ──
 function downloadCSV(){
   try{
@@ -2686,7 +2701,7 @@ function pinConfirm(){
 }
 
 // ── マトリクス ──
-const matrixRecords=[
+const DEMO_MATRIX=[
   {
     operation_date:'2026-06-19', driver_name:'阿部 凌太', customer_name:'山田金属（株）',
     overtime_flag:'正常',
@@ -2738,7 +2753,12 @@ const matrixRecords=[
     skip_step6:true, photos:[]
   }
 ];
-function addRecordToMatrix(p){matrixRecords.push(p);}
+function addRecordToMatrix(p){
+  matrixRecords.push(p);
+  try{
+    localStorage.setItem(LS_MATRIX, JSON.stringify(matrixRecords));
+  }catch(e){}
+}
 
 // GPS 文字列→マップURL
 function gpsToURL(str){if(!str||str==='取得なし'||str.indexOf(',')===-1)return'';const parts=str.split(',');if(parts.length<2)return'';return`https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`;}
@@ -2767,6 +2787,19 @@ const MX_ROWS=[
   {k:'ot',      l:'12:00 超過',               sec:false},
   {k:'memo',    l:'💬 メモ',                  sec:false},
 ];
+
+// ── 実績マトリクス：localStorageから読み込み、なければデモデータ ──
+let matrixRecords = (()=>{
+  try{
+    const raw=localStorage.getItem(LS_MATRIX);
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(Array.isArray(saved)&&saved.length>0) return saved;
+    }
+  }catch(e){}
+  return []; // デモデータは表示しない（実送信データのみ表示）
+})();
+
 function cellV(r,k){
   const ml=str=>{const u=gpsToURL(str);return u?`<a href="${u}" target="_blank" style="color:var(--indigo);font-size:12px;text-decoration:none;">🗺 地図</a>`:`<span style="font-size:12px;color:var(--text-3);">-</span>`;};
   // 写真セル
@@ -2821,9 +2854,27 @@ function cellC(r,k){
   return '';
 }
 function renderMatrix(){
+  // 最新データをlocalStorageから再読み込み
+  try{
+    const raw=localStorage.getItem(LS_MATRIX);
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(Array.isArray(saved)&&saved.length>0){
+        matrixRecords.length=0;
+        saved.forEach(r=>matrixRecords.push(r));
+      }
+    }
+  }catch(e){}
   const head=document.getElementById('matrix-head'),body=document.getElementById('matrix-body');
+  // データなし
+  if(matrixRecords.length===0){
+    head.innerHTML='<th class="sc">項目</th>';
+    body.innerHTML='<tr><td class="sc"></td><td style="text-align:center;padding:32px 20px;color:var(--text-3);font-size:14px;min-width:220px;">まだ送信データがありません<br><span style="font-size:12px;">データを送信すると自動的に記録されます</span></td></tr>';
+    renderAdminSiteList();renderAdminDriverList();renderHistory();return;
+  }
   head.innerHTML=`<th class="sc">項目</th>${matrixRecords.map(r=>`<th style="text-align:center;min-width:130px;">${r.customer_name}</th>`).join('')}`;
   body.innerHTML=MX_ROWS.map(row=>`<tr class="${row.sec?'c-sec':''}"><td class="sc">${row.l}</td>${matrixRecords.map(r=>`<td style="text-align:center;" class="${cellC(r,row.k)}">${cellV(r,row.k)}</td>`).join('')}</tr>`).join('');
+  renderAdminSiteList();renderAdminDriverList();renderHistory();
 }
 </script>
 
