@@ -1519,6 +1519,8 @@ function doFinishAll(){
   tlSetEndState('active');
   updateProgressFromStep(99);
   saveLocal();
+  // ✅card-end へスクロール
+  setTimeout(()=>{ scrollToCard(document.getElementById('card-end')); }, 150);
 }
 function arriveOther(){
   const site=S.otherSites[S.currentSiteIdx];
@@ -2347,7 +2349,7 @@ function scrollToCard(card){
           if(!sm || !sm.classList.contains('active')) return;
           const containerRect = container.getBoundingClientRect();
           const cardRect      = card.getBoundingClientRect();
-          const targetScroll  = container.scrollTop + (cardRect.top - containerRect.top) - 12;
+          const targetScroll  = container.scrollTop + (cardRect.top - containerRect.top) + 15;
           container.scrollTo({ top: Math.max(0, targetScroll), behavior:'smooth' });
         }catch(e){}
       });
@@ -2439,6 +2441,8 @@ function tlAction(stepId){
     tlSetState('s5','active');
     S.currentStep=4;
     saveLocal();
+    // ④card-s5 へスクロール
+    setTimeout(()=>{ scrollToCard(document.getElementById('card-s5')); }, 80);
 
 
   } else if(stepId==='s5'){
