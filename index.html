@@ -1,0 +1,2855 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>回収実績 v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* iOS カラーシステム */
+  --bg:#F2F2F7;       /* iOS グループ背景 */
+  --surface:#FFFFFF;
+  --surface-2:#F2F2F7;
+  --surface-3:#E5E5EA; /* iOS separator */
+  --border:#C6C6C8;   /* iOS separator */
+  --border-s:#D1D1D6;
+  --text:#000000;     /* iOS label */
+  --text-2:#3C3C43;   /* iOS secondaryLabel */
+  --text-3:#8E8E93;   /* iOS tertiaryLabel */
+  /* iOS System Colors */
+  --indigo:#007AFF;   /* iOS Blue */
+  --indigo-d:#0062CC;
+  --indigo-l:#E8F3FF;
+  --green:#34C759;    /* iOS Green */
+  --green-l:#E8FBF0;
+  --amber:#FF9500;    /* iOS Orange */
+  --amber-l:#FFF4E6;
+  --red:#FF3B30;      /* iOS Red */
+  --red-l:#FFF0EF;
+  --orange:#FF9500;
+  --orange-l:#FFF4E6;
+  --slate-h:#1C1C1E;  /* iOS systemBackground dark */
+  --sh:0 2px 8px rgba(0,0,0,.07);
+  --r:12px; --rsm:10px; --rfull:999px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{font-family:'IBM Plex Sans JP',sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.5;min-height:100vh;-webkit-text-size-adjust:100%;}
+.screen{display:none;}.screen.active{display:block;}
+
+/* ── Header（iOSすりガラス） ── */
+.app-hd{
+  background:rgba(28,28,30,.92);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  color:#fff;padding:0 16px;height:52px;
+  display:flex;align-items:center;gap:8px;
+  position:sticky;top:0;z-index:50;
+}
+.hd-title{font-size:17px;font-weight:600;letter-spacing:-.01em;flex:1;}
+.hd-sub{font-size:12px;color:#8E8E93;font-weight:500;}
+.admin-btn{
+  background:rgba(255,255,255,.12);
+  border:none;
+  color:rgba(255,255,255,.9);
+  border-radius:20px;padding:7px 14px;
+  font-size:13px;font-weight:600;
+  cursor:pointer;white-space:nowrap;
+  font-family:inherit;transition:background .15s;
+}
+.admin-btn:active{background:rgba(255,255,255,.22);}
+
+/* ── Progress（強化版ステップカード） ── */
+.prog-wrap{background:rgba(28,28,30,.96);padding:10px 16px 12px;}
+.prog-step-card{display:flex;align-items:center;gap:10px;}
+.prog-step-num{
+  width:32px;height:32px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:none;
+  color:rgba(255,255,255,.35);font-size:14px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:all .25s;
+}
+.prog-step-num.done{background:#34C759;color:#fff;}
+.prog-step-num.active{background:#fff;color:#1C1C1E;}
+.prog-step-info{flex:1;}
+.prog-step-label{font-size:11px;color:#636366;font-weight:500;letter-spacing:.04em;margin-bottom:1px;}
+.prog-step-name{font-size:15px;color:#fff;font-weight:600;}
+.prog-bar-row{display:flex;gap:3px;margin-top:8px;}
+.prog-seg{flex:1;height:2.5px;border-radius:2px;background:rgba(255,255,255,.12);transition:background .3s;}
+.prog-seg.done{background:#34C759;}
+.prog-seg.active{background:#ffffff;}
+
+/* ── Scroll ── */
+.sa{height:calc(100vh - 52px);overflow-y:auto;padding:20px 16px 40px;}
+/* ステップカード表示時: 52(header) + 82(progress) = 134px */
+.sa-s{height:calc(100vh - 134px);overflow-y:auto;padding:20px 16px 90px;}
+.sa-adm{height:calc(100vh - 52px);overflow-y:auto;padding:20px 16px 40px;}
+
+/* ── Card（iOSスタイル・枠なし） ── */
+.card{
+  background:var(--surface);
+  border-radius:var(--r);
+  border:none;
+  padding:18px 16px;
+  margin-bottom:8px;
+  box-shadow:0 1px 0 rgba(0,0,0,.06),0 2px 10px rgba(0,0,0,.04);
+}
+.card-gl{border-left:none;border-top:3px solid var(--green);}
+.card-il{border-left:none;border-top:3px solid var(--indigo);}
+
+/* ── GPS バッジ ── */
+.gps-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:var(--rfull);margin-top:4px;}
+.gps-ok{background:rgba(52,199,89,.12);color:var(--green);}
+.gps-ng{background:rgba(142,142,147,.12);color:var(--text-3);}
+.gps-ing{background:rgba(0,122,255,.1);color:var(--indigo);}
+
+/* ── Status pill ── */
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--rfull);font-size:14px;font-weight:500;margin-bottom:14px;}
+.pill-b{background:rgba(0,122,255,.1);color:var(--indigo);}
+.pill-o{background:rgba(255,149,0,.1);color:var(--amber);}
+.pill-g{background:rgba(52,199,89,.1);color:var(--green);}
+
+/* ── Field ── */
+.fl{font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block;}
+.fv{font-size:28px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+.fvl{font-size:36px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
+
+/* ── Buttons（iOSスタイル） ── */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:15px 20px;
+  font-size:17px;font-weight:600;
+  border-radius:var(--r);border:none;
+  cursor:pointer;transition:opacity .12s;
+  font-family:inherit;letter-spacing:-.01em;
+}
+.btn:active{opacity:.7;}
+.btn:disabled{opacity:.35;pointer-events:none;}
+.btn-p{background:var(--indigo);color:#fff;}
+.btn-pl{background:var(--indigo);color:#fff;padding:17px 20px;font-size:17px;}
+.btn-s{background:var(--green);color:#fff;}
+.btn-d{background:var(--red);color:#fff;}
+.btn-sec{background:var(--surface-3);color:var(--text-2);border:none;}
+.btn-gh{background:var(--surface);color:var(--indigo);border:1px solid var(--border);}
+.btn-am{background:var(--amber);color:#fff;}
+@keyframes pls{0%,100%{box-shadow:0 0 0 0 rgba(0,122,255,.3);}60%{box-shadow:0 0 0 10px rgba(0,122,255,0);}}
+.pulse{animation:pls 2s infinite;}
+
+/* ── Fixed bottom action button ── */
+.fixed-bottom-bar{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  padding:10px 16px 24px;
+  background:linear-gradient(to bottom, rgba(240,244,248,0) 0%, var(--bg) 28%);
+  z-index:30;
+  pointer-events:none;
+  display:none;
+}
+.fixed-bottom-bar.visible{ display:block; }
+.fixed-bottom-bar .btn{
+  pointer-events:all;
+  max-width:480px; margin:0 auto;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+/* sa-s はfixed barの高さ分だけ下パディング */
+
+.qty-lbl{font-size:13px;font-weight:500;color:var(--text-3);margin-bottom:6px;letter-spacing:.02em;}
+.qty-dsp{
+  text-align:center;padding:14px 0;
+  background:var(--surface-2);border-radius:10px;
+  border:none;margin-bottom:10px;
+  font-size:44px;font-weight:200;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;
+}
+.qty-unit{font-size:18px;font-weight:400;color:var(--text-3);margin-left:3px;}
+.qty-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.qb{
+  padding:16px 6px;font-size:19px;font-weight:600;
+  border-radius:10px;border:none;
+  cursor:pointer;font-family:inherit;transition:opacity .12s;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.qb:active{opacity:.6;}
+.qb-a{background:var(--indigo-l);color:var(--indigo);}
+.qb-s{background:var(--red-l);color:var(--red);}
+.qb-sub{font-size:12px;font-weight:500;opacity:.7;margin-left:1px;}
+
+/* ── Checklist（iOS Reminders風） ── */
+.ci{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid var(--surface-3);cursor:pointer;}
+.ci:last-child{border-bottom:none;}
+.cibox{
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  margin-top:0;transition:all .2s;background:var(--surface);
+}
+.ci.ck .cibox{background:var(--green);border-color:var(--green);}
+.cin{font-size:16px;font-weight:500;color:var(--text);}
+.ci.ck .cin{color:var(--green);}
+.cit{
+  display:inline-block;margin-top:3px;
+  font-size:12px;font-weight:500;
+  color:var(--text-3);
+  background:transparent;
+  padding:0;
+  border-radius:0;
+  font-variant-numeric:tabular-nums;
+}
+.ci.ck .cit{background:transparent;color:var(--green);}
+
+/* ── Timeline result card ── */
+.tlc{background:var(--surface);border-radius:12px;border:none;overflow:hidden;margin-bottom:8px;box-shadow:0 1px 0 rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);}
+.tlh{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--surface-2);}
+.tldot{width:7px;height:7px;border-radius:50%;flex-shrink:0;opacity:.8;}
+.tlhl{font-size:13px;font-weight:600;color:var(--text-2);flex:1;letter-spacing:.01em;}
+.badge-mod{font-size:11px;font-weight:700;background:var(--amber-l);color:var(--amber);border:1px solid #fde68a;padding:2px 8px;border-radius:var(--rfull);margin-left:6px;}
+/* ボディ */
+.tlb{padding:14px 16px;}
+/* 所要時間ヒーロー */
+.tl-dur-hero{text-align:center;padding:6px 0 10px;}
+.tl-dur-num{font-size:48px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;}
+.tl-dur-unit{font-size:16px;font-weight:600;color:var(--text-3);margin-left:4px;}
+/* カラーバー */
+.tl-bar-wrap{height:6px;background:var(--surface-2);border-radius:3px;margin:0 0 12px;overflow:hidden;}
+.tl-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+/* 開始〜終了（1行・小さめ） */
+.tl-time-row{display:flex;align-items:center;justify-content:center;gap:8px;}
+.tl-time-chip{font-size:18px;font-weight:700;color:var(--text-2);font-variant-numeric:tabular-nums;background:var(--surface-2);padding:6px 14px;border-radius:var(--rsm);}
+.tl-time-arrow{font-size:14px;color:var(--text-3);}
+.gps-row{font-size:11px;color:var(--text-3);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px;}
+
+/* ── Task timeline ── */
+.tti{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.tti:last-child{border-bottom:none;}
+.ttn{width:22px;height:22px;border-radius:50%;background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.tti.done .ttn{background:var(--green);color:#fff;}
+.ttnm{flex:1;font-size:14px;font-weight:600;color:var(--text-2);}
+.tti.done .ttnm{color:var(--text);}
+.tttm{font-size:14px;font-weight:700;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.tti.done .tttm{color:var(--green);}
+.ttel{font-size:11px;color:var(--text-3);}
+
+/* ── Total / Overtime ── */
+.tot-card{background:var(--slate-h);border-radius:var(--r);padding:20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.tot-lbl{font-size:12px;font-weight:600;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;}
+.tot-val{font-size:36px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;}
+.tot-sub{font-size:13px;color:#64748b;margin-top:2px;font-variant-numeric:tabular-nums;}
+.ot-card{background:var(--orange-l);border:1px solid #fed7aa;border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;}
+.ot-title{font-size:14px;font-weight:700;color:#9a3412;}
+.ot-msg{font-size:13px;color:#c2410c;margin-top:2px;}
+
+/* ── Resume banner ── */
+.resume-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;}
+
+/* ── Qty summary ── */
+.qsr{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--border);}
+.qsr:last-child{border-bottom:none;}
+.qsk{font-size:14px;font-weight:600;color:var(--text-2);}
+.qsv{font-size:22px;font-weight:700;color:var(--text);}
+
+/* ── Edit form ── */
+.ei{font-size:22px;font-weight:700;width:100%;padding:12px 14px;border-radius:var(--rsm);border:1.5px solid #93c5fd;text-align:right;color:var(--text);outline:none;background:var(--surface);font-family:inherit;}
+.ei:focus{border-color:var(--indigo);}
+.ei.mod{border-color:var(--amber);background:#fffbeb;}
+
+/* ── Form ── */
+.fg{margin-bottom:14px;}
+.fsel{
+  width:100%;padding:13px 40px 13px 14px;
+  font-size:17px;font-weight:400;
+  border-radius:var(--r);border:none;
+  background:var(--surface);color:var(--text);
+  outline:none;-webkit-appearance:none;appearance:none;
+  font-family:inherit;
+  box-shadow:0 0 0 1px var(--border);
+  transition:box-shadow .15s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+}
+.fsel:focus{box-shadow:0 0 0 2px var(--indigo);}
+.fsel.err{box-shadow:0 0 0 2px var(--red);}
+.finp{
+  width:100%;padding:13px 14px;
+  font-size:17px;font-weight:400;
+  border-radius:var(--r);border:none;
+  background:var(--surface);color:var(--text);
+  outline:none;font-family:inherit;
+  box-shadow:0 0 0 1px var(--border);
+  transition:box-shadow .15s;
+}
+.finp:focus{box-shadow:0 0 0 2px var(--indigo);}
+.errmsg{font-size:13px;color:var(--red);font-weight:500;margin-top:6px;}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;margin-top:6px;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+
+/* ── Numpad ── */
+/* ── iPhoneスタイルPIN入力 ── */
+.pin-screen-wrap{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:calc(100vh - 52px);padding:0 20px;
+  background:var(--bg);
+}
+.pin-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;text-align:center;}
+.pin-subtitle{font-size:14px;color:var(--text-3);margin-bottom:32px;text-align:center;}
+/* ドット表示 */
+.pin-dots{display:flex;gap:18px;justify-content:center;margin-bottom:8px;}
+.pin-dot{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--border-s);
+  background:var(--surface);
+  transition:all .15s;
+}
+.pin-dot.filled{background:var(--text);border-color:var(--text);}
+.pin-dot.error{background:var(--red);border-color:var(--red);}
+.pin-err{font-size:13px;color:var(--red);font-weight:600;text-align:center;margin-top:8px;margin-bottom:0;min-height:18px;}
+/* テンキー */
+.numpad{
+  display:grid;grid-template-columns:repeat(3,72px);
+  grid-template-rows:repeat(4,72px);
+  gap:12px;margin-top:32px;
+}
+.nb{
+  width:72px;height:72px;border-radius:50%;
+  border:none;cursor:pointer;
+  background:var(--surface-2);
+  color:var(--text);
+  font-size:26px;font-weight:400;
+  font-family:inherit;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  transition:opacity .12s;
+  box-shadow:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.nb:active{opacity:.5;}
+.nb-sub{font-size:9px;font-weight:600;letter-spacing:.08em;color:var(--text-3);margin-top:1px;text-transform:uppercase;}
+.nb-ghost{background:transparent;color:var(--text-2);}  /* 空セル */
+.nb-del{background:transparent;color:var(--text);font-size:22px;}
+.nb-del:active{opacity:.5;}
+
+/* ── Admin matrix ── */
+.adm-hd{background:var(--slate-h);color:#fff;padding:0 16px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+.mx-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--border);box-shadow:0 4px 12px rgba(0,0,0,.06);}
+.mx{border-collapse:collapse;background:var(--surface);font-size:13px;min-width:100%;}
+.mx thead th{background:var(--slate-h);color:#cbd5e1;font-weight:700;font-size:12px;padding:10px 14px;white-space:nowrap;letter-spacing:.04em;border:none;}
+.mx thead th.sc{background:#0f172a;position:sticky;left:0;z-index:3;min-width:160px;text-align:left;}
+.mx tbody td{padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap;font-weight:500;color:var(--text);}
+.mx tbody td.sc{background:var(--surface);font-weight:700;color:var(--text-2);font-size:12px;position:sticky;left:0;z-index:1;border-right:1px solid var(--border);}
+.mx tbody tr:hover td{background:#f8faff;}
+.mx tbody tr:hover td.sc{background:var(--surface-2);}
+.c-ov{background:var(--red-l)!important;color:var(--red)!important;font-weight:700;}
+.c-ok{color:var(--green);font-weight:700;}
+.c-sec td{background:#f8faff!important;}
+.c-sec td.sc{background:#eff2ff!important;color:var(--indigo)!important;}
+
+/* ── Modals ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+.overlay.active{display:flex;}
+.bsheet{
+  background:var(--surface);
+  border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;
+  padding:20px 20px 40px;
+  box-shadow:0 -4px 30px rgba(0,0,0,.12);
+}
+.bhandle{width:36px;height:4px;background:var(--surface-3);border-radius:2px;margin:0 auto 18px;}
+.mt{font-size:17px;font-weight:600;margin-bottom:6px;color:var(--text);}
+.mb{font-size:15px;color:var(--text-2);line-height:1.5;margin-bottom:18px;white-space:pre-wrap;}
+.loading-sc{position:fixed;inset:0;background:var(--slate-h);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;}
+.loading-sc.active{display:flex;}
+.spinner{width:44px;height:44px;border:3px solid #334155;border-top-color:#818cf8;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.done-sc{position:fixed;inset:0;background:#0f172a;z-index:201;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;padding:32px;text-align:center;}
+.done-sc.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp .2s ease forwards;}
+#live-clock{font-size:56px;font-weight:100;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.03em;}
+.tpill{display:inline-block;background:var(--slate-h);color:#818cf8;padding:6px 14px;border-radius:var(--rfull);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;}
+
+/* ── 写真添付UI ── */
+.photo-zone{margin-top:12px;padding:12px;background:var(--surface-2);border-radius:var(--rsm);border:1.5px dashed var(--border-s);}
+.photo-lbl{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.photo-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;font-size:14px;font-weight:700;background:var(--indigo);color:#fff;border:none;border-radius:var(--rsm);cursor:pointer;font-family:inherit;transition:opacity .15s;}
+.photo-btn:active{opacity:.8;}
+.photo-input{display:none;}
+.photo-preview-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.photo-thumb{position:relative;width:80px;height:80px;border-radius:var(--rsm);overflow:hidden;box-shadow:var(--sh);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-del{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.photo-count{font-size:12px;color:var(--text-3);margin-top:6px;}
+
+/* ── 画像フルスクリーンモーダル ── */
+.img-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
+.img-modal.active{display:flex;}
+.img-modal-inner{position:relative;max-width:100%;max-height:100%;}
+.img-modal img{max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);border-radius:var(--r);box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.img-modal-close{position:absolute;top:-14px;right:-14px;width:36px;height:36px;border-radius:50%;background:#fff;color:#0f172a;border:none;cursor:pointer;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.img-modal-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;}
+.img-modal-prev{left:-50px;}
+.img-modal-next{right:-50px;}
+.img-modal-counter{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-size:13px;color:rgba(255,255,255,.6);font-weight:600;white-space:nowrap;}
+
+/* ── マトリクス写真サム ── */
+.mx-thumb{width:56px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid var(--border);transition:opacity .15s;}
+.mx-thumb:active{opacity:.75;}
+
+/* ── 1ページタイムライン ── */
+.tl-screen{display:none;}
+.tl-screen.active{display:block;}
+
+.tl-section{
+  position:relative;
+  padding:0 0 0 46px;
+  margin-bottom:0;
+  scroll-margin-top:160px;
+}
+/* 縦線：細く・薄く */
+.tl-section::before{
+  content:'';
+  position:absolute;
+  left:17px; top:0; bottom:0;
+  width:1.5px;
+  background:var(--border);
+  opacity:.6;
+}
+.tl-section:last-child::before{ bottom:50%; }
+
+/* ノード */
+.tl-node{
+  position:absolute;
+  left:9px; top:18px;
+  width:20px; height:20px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--surface);
+  transition:all .25s;
+  z-index:2;
+  display:flex;align-items:center;justify-content:center;
+}
+.tl-node.done{background:var(--green);border-color:var(--green);}
+.tl-node.done::after{
+  content:'';
+  display:block; width:7px; height:4px;
+  border-left:2px solid #fff; border-bottom:2px solid #fff;
+  transform:rotate(-45deg) translate(1px,-1px);
+}
+.tl-node.active{background:var(--indigo);border-color:var(--indigo);animation:node-pulse 1.8s infinite;}
+@keyframes node-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,122,255,.35);}50%{box-shadow:0 0 0 7px rgba(0,122,255,0);}}
+
+/* セクションカード */
+.tl-card-wrap{
+  background:var(--surface);
+  border-radius:12px;
+  border:none;
+  padding:16px;
+  margin-bottom:10px;
+  box-shadow:0 1px 0 rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+  transition:box-shadow .25s;
+}
+.tl-card-wrap.active{
+  box-shadow:0 0 0 2px var(--indigo),0 4px 16px rgba(0,122,255,.12);
+}
+.tl-card-wrap.done{
+  background:#FAFFFE;
+  box-shadow:0 0 0 1.5px rgba(52,199,89,.3),0 2px 8px rgba(52,199,89,.06);
+}
+.tl-card-wrap.locked{opacity:.4;pointer-events:none;}
+
+/* タップ式アクションボタン（チェックみたいに） */
+.tl-action-btn{
+  width:100%;
+  padding:14px 16px;
+  background:var(--surface-2);
+  border:2px dashed var(--border);
+  border-radius:var(--r);
+  cursor:pointer;
+  font-size:16px;font-weight:700;color:var(--text-2);
+  display:flex;align-items:center;gap:10px;
+  transition:all .2s;
+  font-family:inherit;
+  text-align:left;
+}
+.tl-action-btn:active{transform:scale(.99);}
+.tl-action-btn.done{
+  background:var(--green-l);
+  border:2px solid var(--green);
+  color:var(--green);
+}
+.tl-action-btn.active-btn{
+  background:var(--indigo-l);
+  border:2px solid var(--indigo);
+  color:var(--indigo);
+}
+.tl-action-icon{font-size:20px;flex-shrink:0;}
+.tl-action-text{flex:1;}
+.tl-action-label{font-size:14px;font-weight:600;opacity:.7;margin-bottom:2px;}
+.tl-action-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
+
+/* 数量入力（コンパクト版） */
+.qty-inline{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.qty-inline-val{flex:1;text-align:center;background:var(--surface-2);border-radius:var(--rsm);padding:10px;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;}
+.qty-inline-unit{font-size:14px;font-weight:600;color:var(--text-3);}
+.qty-inline-btns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;}
+
+/* 他社処分場動的セクション */
+.other-site-section{
+  background:var(--orange-l);
+  border-radius:var(--r);
+  border:1px solid #fed7aa;
+  padding:14px 16px;
+  margin-bottom:12px;
+}
+.other-site-header{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+
+/* ── アクション行（出発/到着タブ）iOS風 ── */
+.tl-action-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;
+  background:var(--surface-2);
+  border-radius:var(--r);
+  border:1.5px dashed var(--border);
+  transition:all .2s;
+}
+.tl-action-row.done{
+  background:var(--green-l);
+  border:1.5px solid var(--green);
+}
+.tl-action-row.active-row{
+  background:var(--indigo-l);
+  border:1.5px solid var(--indigo);
+}
+/* タブボタン */
+.tl-tab-btn{
+  flex-shrink:0;
+  padding:9px 16px;
+  border-radius:20px;
+  border:none;
+  cursor:pointer;
+  font-size:15px;font-weight:600;
+  font-family:inherit;
+  transition:opacity .12s;
+  background:var(--indigo);color:#fff;
+  min-width:64px;text-align:center;
+}
+.tl-tab-btn:active{opacity:.7;}
+.tl-tab-btn.done{background:var(--green);cursor:default;}
+.tl-tab-btn.pending{background:var(--surface-3);color:var(--text-3);cursor:default;}
+/* 時刻テキスト */
+.tl-time-info{flex:1;}
+.tl-time-info-label{font-size:12px;font-weight:500;color:var(--text-3);margin-bottom:1px;}
+.tl-time-info-val{font-size:26px;font-weight:300;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
+.tl-action-row.done .tl-time-info-val{color:var(--green);font-weight:500;}
+/* セクション番号を丸囲み数字に */
+.tl-sec-header{
+  font-size:13px;font-weight:600;
+  color:var(--text-3);
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:10px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.tl-sec-num{
+  font-size:16px;font-weight:700;
+  color:var(--indigo);
+  background:var(--indigo-l);
+  width:24px;height:24px;
+  border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+/* 完了行 */
+.tl-goto-btn{
+  width:100%;padding:14px 16px;
+  background:var(--surface-2);border:1.5px dashed var(--border);
+  border-radius:var(--r);cursor:pointer;font-family:inherit;
+  font-size:16px;font-weight:600;color:var(--text-2);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:opacity .12s;
+}
+.tl-goto-btn.active-row{
+  background:var(--indigo-l);
+  border:1.5px solid var(--indigo);
+  color:var(--indigo);
+}
+.tl-goto-btn:active{opacity:.7;}
+
+/* ── 数値修正セクション（折りたたみ） ── */
+.edit-toggle-btn{
+  width:100%;padding:14px 16px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--r);
+  cursor:pointer;font-family:inherit;
+  font-size:15px;font-weight:700;color:var(--text-2);
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:0;transition:background .15s;
+}
+.edit-toggle-btn:active{background:var(--surface-2);}
+.edit-toggle-icon{font-size:18px;transition:transform .25s;}
+.edit-toggle-icon.open{transform:rotate(180deg);}
+.edit-body{
+  display:none;
+  padding-top:16px;
+}
+.edit-body.open{display:block;}
+
+/* ── 修正済ラベル強化 ── */
+.edit-modified-label{
+  display:inline-flex;align-items:center;gap:4px;
+  background:#fef3c7;color:#92400e;
+  border:1.5px solid #fbbf24;
+  padding:3px 10px;border-radius:var(--rfull);
+  font-size:12px;font-weight:700;
+}
+.edit-field-wrap{ margin-bottom:16px; }
+.edit-field-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:6px;
+}
+.edit-field-label{ font-size:13px;font-weight:600;color:var(--text-3); }
+
+/* ── 写真2ボタン ── */
+.photo-btn-row{display:flex;gap:8px;margin-bottom:0;}
+.photo-btn-cam{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:11px 6px;font-size:13px;font-weight:700;
+  background:var(--indigo);color:#fff;
+  border:none;border-radius:var(--rsm);cursor:pointer;
+  font-family:inherit;transition:opacity .15s;
+  white-space:nowrap;overflow:hidden;
+}
+.photo-btn-lib{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:11px 6px;font-size:13px;font-weight:700;
+  background:var(--surface);color:var(--indigo);
+  border:1.5px solid var(--indigo);border-radius:var(--rsm);cursor:pointer;
+  font-family:inherit;transition:opacity .15s;
+  white-space:nowrap;overflow:hidden;
+}
+.photo-btn-cam:active,.photo-btn-lib:active{opacity:.8;}
+
+/* ── メモ欄 ── */
+.memo-textarea{
+  width:100%;
+  padding:12px 14px;
+  font-size:16px;
+  font-family:inherit;
+  border-radius:var(--rsm);
+  border:1.5px solid var(--border);
+  background:var(--surface);
+  color:var(--text);
+  outline:none;
+  resize:none;
+  line-height:1.6;
+  transition:border-color .15s;
+  min-height:90px;
+}
+.memo-textarea:focus{ border-color:var(--indigo); }
+.memo-count{ font-size:12px; color:var(--text-3); text-align:right; margin-top:4px; }
+
+/* ── Toast通知 ── */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(28,28,30,.88);color:#fff;
+  padding:10px 20px;border-radius:20px;
+  font-size:14px;font-weight:500;
+  opacity:0;transition:opacity .3s,transform .3s;
+  z-index:200;pointer-events:none;white-space:nowrap;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* ヘッダー「新規開始」ボタン */
+.new-start-btn{
+  background:transparent;border:none;color:rgba(255,255,255,.55);
+  font-size:12px;font-weight:500;cursor:pointer;
+  padding:4px 8px;border-radius:var(--rfull);
+  font-family:inherit;transition:color .15s;white-space:nowrap;
+}
+.new-start-btn:active{color:#fff;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-hd" id="app-hd">
+  <div style="flex:1">
+    <div class="hd-title">回収実績記録</div>
+    <div class="hd-sub" id="header-step">本日の業務</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+    <button class="new-start-btn" id="new-start-btn" style="display:none;" onclick="confirmReset()">✕ 新規開始</button>
+    <button class="admin-btn" onclick="openAdminAuth()">🔒 管理者用</button>
+    <div id="hd-clock" style="font-size:12px;color:#64748b;font-variant-numeric:tabular-nums;font-weight:600;min-width:60px;text-align:right;"></div>
+  </div>
+</header>
+
+<!-- PROGRESS -->
+<div id="prog-wrap" style="display:none">
+  <div class="prog-wrap">
+    <div class="prog-step-card">
+      <div class="prog-step-num" id="prog-num">1</div>
+      <div class="prog-step-info">
+        <div class="prog-step-label" id="prog-label">STEP</div>
+        <div class="prog-step-name" id="prog-name">-</div>
+      </div>
+      <div style="font-size:13px;color:#475569;font-weight:600;flex-shrink:0;" id="prog-fraction">1 / 6</div>
+    </div>
+    <div class="prog-bar-row">
+      <div class="prog-seg" id="ps1"></div>
+      <div class="prog-seg" id="ps2"></div>
+      <div class="prog-seg" id="ps3"></div>
+      <div class="prog-seg" id="ps4"></div>
+      <div class="prog-seg" id="ps5"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 初期画面 ==================== -->
+<div class="screen active fade-in" id="screen-start">
+  <div class="sa" style="max-width:480px;margin:0 auto;">
+
+    <!-- 復元バナー -->
+    <div class="resume-banner" id="resume-banner" style="display:none;visibility:hidden;height:0;overflow:hidden;margin:0;padding:0;">
+      <div style="font-size:20px;flex-shrink:0;">💾</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#1d4ed8;">前回の未完了データが見つかりました</div>
+        <div style="font-size:13px;color:#3b82f6;margin-top:2px;">データを復元して続きから再開できます</div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-p" style="padding:10px 16px;font-size:14px;flex:1;" onclick="resumeData()">続きから再開</button>
+          <button class="btn btn-gh" style="padding:10px 16px;font-size:14px;flex:1;" onclick="clearAndFresh()">新規で開始</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:24px 0 20px;">
+      <div id="live-clock">--:--:--</div>
+      <div style="font-size:15px;color:var(--text-2);margin-top:4px;" id="today-disp">-</div>
+    </div>
+
+    <div class="card card-gl" style="padding:14px 20px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:13px;font-weight:600;color:var(--green);letter-spacing:.06em;white-space:nowrap;">📅 回収日</span>
+        <div style="font-size:22px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="today-disp2">-</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="fg">
+        <label class="fl">👤 ドライバー名 <span style="color:var(--red);font-size:12px;">必須</span></label>
+        <select class="fsel" id="driver-select" onchange="onDriverChange()">
+          <option value="">選択してください</option>
+          <option value="阿部 凌太">阿部 凌太</option>
+          <option value="秋元 弘樹">秋元 弘樹</option>
+        </select>
+        <div class="errmsg" id="driver-error" style="display:none;">ドライバーを選択してください</div>
+      </div>
+      <div class="fg" style="margin-bottom:0;">
+        <label class="fl">🏢 対応顧客名</label>
+        <input class="finp" type="text" id="customer-name" placeholder="例：山田金属株式会社">
+      </div>
+    </div>
+
+    <button class="btn btn-pl pulse" onclick="startDay()">出発する</button>
+  </div>
+</div>
+
+<!-- ==================== タイムライン作業画面 ==================== -->
+<div class="screen" id="screen-main">
+  <div style="height:calc(100vh - 134px);overflow-y:auto;padding:16px 16px 120px;max-width:480px;margin:0 auto;" id="main-scroll">
+
+
+
+    <!-- ===== ② 顧客先 到着 ===== -->
+    <div class="tl-section" id="sec-s2">
+      <div class="tl-node" id="node-s2"></div>
+      <div class="tl-card-wrap locked" id="card-s2">
+        <div class="tl-sec-header"><span class="tl-sec-num">①</span>顧客先 到着</div>
+        <div class="tl-action-row" id="row-s2">
+          <button class="tl-tab-btn pending" id="btn-s2" onclick="tlAction('s2')">到着</button>
+          <div class="tl-time-info">
+            <div class="tl-time-info-label">到着時刻記録</div>
+            <div class="tl-time-info-val" id="time-s2">--:--</div>
+          </div>
+        </div>
+        <div id="gps-s2" style="display:none;margin-top:8px;" class="gps-badge gps-ing">📍 位置取得中...</div>
+      </div>
+    </div>
+
+    <!-- ===== S3: 回収作業チェックリスト ===== -->
+    <div class="tl-section" id="sec-s3">
+      <div class="tl-node" id="node-s3"></div>
+      <div class="tl-card-wrap locked" id="card-s3">
+        <div class="tl-sec-header"><span class="tl-sec-num">②</span>回収作業チェックリスト</div>
+        <div id="checklist"></div>
+        <div style="font-size:13px;color:var(--text-3);text-align:right;padding-top:8px;" id="check-count">0 / 7 完了</div>
+        <!-- 写真添付（回収物確認と同一エリアに統合済み） -->
+      </div>
+    </div>
+
+    <!-- ===== ④ 処分場へ出発 ===== -->
+    <div class="tl-section" id="sec-s4">
+      <div class="tl-node" id="node-s4"></div>
+      <div class="tl-card-wrap locked" id="card-s4">
+        <div class="tl-sec-header"><span class="tl-sec-num">③</span>処分場へ出発</div>
+        <div class="tl-action-row" id="row-s4">
+          <button class="tl-tab-btn pending" id="btn-s4" onclick="tlAction('s4')">出発</button>
+          <div class="tl-time-info">
+            <div class="tl-time-info-label">出発時刻記録</div>
+            <div class="tl-time-info-val" id="time-s4">--:--</div>
+          </div>
+        </div>
+        <div id="gps-s4" style="display:none;margin-top:8px;" class="gps-badge gps-ing">📍 位置取得中...</div>
+      </div>
+    </div>
+
+    <!-- ===== S5: 自社処分場 到着 ===== -->
+    <div class="tl-section" id="sec-s5">
+      <div class="tl-node" id="node-s5"></div>
+      <div class="tl-card-wrap locked" id="card-s5">
+        <div class="tl-sec-header"><span class="tl-sec-num">④</span>自社処分場 到着・荷下ろし</div>
+        <div class="tl-action-row" id="row-s5">
+          <button class="tl-tab-btn pending" id="btn-s5" onclick="tlAction('s5')">到着</button>
+          <div class="tl-time-info">
+            <div class="tl-time-info-label">到着時刻記録</div>
+            <div class="tl-time-info-val" id="time-s5">--:--</div>
+          </div>
+        </div>
+        <div id="gps-s5" style="display:none;margin-top:8px;" class="gps-badge gps-ing">📍 位置取得中...</div>
+        <!-- 荷下ろし数量（到着後に表示） -->
+        <div id="qty-wrap-s5" style="display:none;margin-top:14px;">
+          <div class="divider"></div>
+          <div class="qty-lbl">📦 数量（立米）</div>
+          <div class="qty-dsp" onclick="openQtyInput('cbm','qty-cbm')" style="cursor:pointer;" title="タップで直接入力"><span id="qty-cbm">0.0</span><span class="qty-unit">㎥</span></div>
+          <div class="qty-grid">
+            <button class="qb qb-s" onclick="adjQty('cbm',-1)">－1 <span class="qb-sub">㎥</span></button>
+            <button class="qb qb-a" onclick="adjQty('cbm',1)">＋1 <span class="qb-sub">㎥</span></button>
+            <button class="qb qb-s" style="font-size:17px;padding:14px 6px;" onclick="adjQty('cbm',-0.1)">－0.1</button>
+            <button class="qb qb-a" style="font-size:17px;padding:14px 6px;" onclick="adjQty('cbm',0.1)">＋0.1</button>
+          </div>
+          <div class="divider"></div>
+          <div class="qty-lbl">⚖️ 重量（kg）</div>
+          <div class="qty-dsp" onclick="openQtyInput('kg','qty-kg')" style="cursor:pointer;" title="タップで直接入力"><span id="qty-kg">0</span><span class="qty-unit">kg</span></div>
+          <div class="qty-grid">
+            <button class="qb qb-s" onclick="adjQty('kg',-100)">－100 <span class="qb-sub">kg</span></button>
+            <button class="qb qb-a" onclick="adjQty('kg',100)">＋100 <span class="qb-sub">kg</span></button>
+            <button class="qb qb-s" style="font-size:17px;padding:14px 6px;" onclick="adjQty('kg',-10)">－10</button>
+            <button class="qb qb-a" style="font-size:17px;padding:14px 6px;" onclick="adjQty('kg',10)">＋10</button>
+          </div>
+          <div class="divider"></div>
+          <button class="btn btn-s" style="font-size:17px;padding:16px;" onclick="unloadComplete(this)">荷下ろし完了</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 他社処分場（動的生成エリア） ===== -->
+    <div id="other-sites-area"></div>
+
+    <!-- ===== 完了 ===== -->
+    <div class="tl-section" id="sec-end">
+      <div class="tl-node" id="node-end"></div>
+      <div class="tl-card-wrap locked" id="card-end">
+        <div class="tl-sec-header"><span class="tl-sec-num">✅</span>実績を確認・送信</div>
+        <button class="tl-goto-btn" id="btn-end" onclick="goToResult()">
+          📋　→ 確認画面へ
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /main-scroll -->
+</div><!-- /screen-main -->
+
+<!-- ==================== 実績確認 ==================== -->
+<div class="screen fade-in" id="screen-result">
+  <div class="sa-s" style="max-width:480px;margin:0 auto;padding-bottom:48px;">
+    <div class="card" style="padding:16px 20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><div class="fl">回収日</div><div style="font-size:15px;font-weight:700;" id="result-date">-</div></div>
+        <div><div class="fl">ドライバー</div><div style="font-size:15px;font-weight:700;color:var(--indigo);" id="result-driver">-</div></div>
+        <div style="grid-column:1/-1;"><div class="fl">顧客名</div><div style="font-size:15px;font-weight:700;" id="result-customer">-</div></div>
+      </div>
+    </div>
+    <div id="total-banner"></div>
+    <div id="overtime-banner"></div>
+    <div id="result-tl"></div>
+    <div id="result-qty"></div>
+    <div class="card" id="edit-section-card">
+      <button class="edit-toggle-btn" onclick="toggleEditSection()">
+        <span>✏️ 数値を修正する</span>
+        <span class="edit-toggle-icon" id="edit-toggle-icon">▼</span>
+      </button>
+      <div class="edit-body" id="edit-body">
+        <p style="font-size:13px;color:var(--text-3);margin:0 0 14px;">変更した項目には「修正済」マークが付きます。修正後は「修正を反映する」をタップしてください。</p>
+        <div class="edit-field-wrap">
+          <div class="edit-field-header">
+            <label class="edit-field-label">自社処分場 数量（㎥）</label>
+            <span class="edit-modified-label" id="mod-badge-cbm" style="display:none;">✏️ 修正済</span>
+          </div>
+          <input class="ei" type="number" id="edit-cbm" step="0.1" min="0" oninput="markMod('cbm')">
+        </div>
+        <div class="edit-field-wrap">
+          <div class="edit-field-header">
+            <label class="edit-field-label">自社処分場 重量（kg）</label>
+            <span class="edit-modified-label" id="mod-badge-kg" style="display:none;">✏️ 修正済</span>
+          </div>
+          <input class="ei" type="number" id="edit-kg" step="10" min="0" oninput="markMod('kg')">
+        </div>
+        <div id="edit-other-sites"></div>
+        <button class="btn btn-p" style="font-size:15px;padding:14px;margin-top:4px;" onclick="applyEdits()">修正を反映する</button>
+      </div>
+    </div>
+    <!-- メモ欄（デフォルト非表示） -->
+    <div class="card" id="memo-section-card">
+      <button class="edit-toggle-btn" onclick="toggleMemoSection()">
+        <span>💬 メモを追加する</span>
+        <span class="edit-toggle-icon" id="memo-toggle-icon">▼</span>
+      </button>
+      <div class="edit-body" id="memo-body">
+        <p style="font-size:13px;color:var(--text-3);margin:0 0 10px;">積み残し・特記事項など自由に記入できます（任意・最大200文字）</p>
+        <textarea class="memo-textarea" id="memo-input" maxlength="200"
+          placeholder="例：積み残しあり。写真参照のこと。"
+          oninput="onMemoInput(this)"></textarea>
+        <div class="memo-count" id="memo-count">0 / 200</div>
+      </div>
+    </div>
+
+    <button class="btn btn-p" style="font-size:18px;padding:18px;margin-bottom:10px;" id="btn-submit" onclick="submitData()">データを送信して終了</button>
+    <button class="btn btn-gh" style="font-size:15px;" onclick="confirmReset()">最初からやり直す</button>
+  </div>
+</div>
+
+<!-- ==================== 管理者認証 ==================== -->
+<div class="screen fade-in" id="screen-admin-auth">
+  <div class="pin-screen-wrap">
+    <div class="pin-title">🔒 管理者認証</div>
+    <div class="pin-subtitle">暗証番号を入力</div>
+    <!-- ドット4つ -->
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd-0"></div>
+      <div class="pin-dot" id="pd-1"></div>
+      <div class="pin-dot" id="pd-2"></div>
+      <div class="pin-dot" id="pd-3"></div>
+    </div>
+    <div class="pin-err" id="pin-error"></div>
+    <!-- テンキー（iPhoneスタイル） -->
+    <div class="numpad">
+      <button class="nb" onclick="pinInput('1')">1<span class="nb-sub">&nbsp;</span></button>
+      <button class="nb" onclick="pinInput('2')">2<span class="nb-sub">ABC</span></button>
+      <button class="nb" onclick="pinInput('3')">3<span class="nb-sub">DEF</span></button>
+      <button class="nb" onclick="pinInput('4')">4<span class="nb-sub">GHI</span></button>
+      <button class="nb" onclick="pinInput('5')">5<span class="nb-sub">JKL</span></button>
+      <button class="nb" onclick="pinInput('6')">6<span class="nb-sub">MNO</span></button>
+      <button class="nb" onclick="pinInput('7')">7<span class="nb-sub">PQRS</span></button>
+      <button class="nb" onclick="pinInput('8')">8<span class="nb-sub">TUV</span></button>
+      <button class="nb" onclick="pinInput('9')">9<span class="nb-sub">WXYZ</span></button>
+      <button class="nb nb-ghost" onclick="showScreen('screen-start');setProgress(0); const _nb=document.getElementById('new-start-btn'); if(_nb) _nb.style.display='none';" style="font-size:13px;font-weight:600;color:var(--text-2);">キャンセル</button>
+      <button class="nb" onclick="pinInput('0')">0<span class="nb-sub">&nbsp;</span></button>
+      <button class="nb nb-del" onclick="pinDelete()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 管理者画面 ==================== -->
+<div class="screen fade-in" id="screen-admin">
+  <div class="adm-hd">
+    <div style="flex:1;"><div style="font-size:16px;font-weight:700;">📊 実績マトリクス</div><div style="font-size:11px;color:#64748b;">顧客別タイムライン検証</div></div>
+    <button onclick="showScreen('screen-start');setProgress(0);
+  ['s1','s2','s3','s4','s5'].forEach(id=>{
+    const cd=document.getElementById('card-'+id);
+    const nd=document.getElementById('node-'+id);
+    const bt=document.getElementById('btn-'+id);
+    if(cd){cd.className='tl-card-wrap locked';}
+    if(nd){nd.classList.remove('active','done');}
+    if(bt){bt.classList.remove('active-btn','done');}
+  });
+  const osa=document.getElementById('other-sites-area');
+  if(osa) osa.innerHTML='';
+  const cend=document.getElementById('card-end');
+  if(cend) cend.className='tl-card-wrap locked';" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);border-radius:var(--rsm);padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">🚛 ドライバー画面へ</button>
+  </div>
+  <div class="sa-adm">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+      <div style="font-size:13px;color:var(--text-3);background:var(--indigo-l);border-radius:var(--rsm);padding:10px 14px;flex:1;border:1px solid #c7d2fe;">← 横スクロールで全顧客を確認 / 送信データは右端に追加されます</div>
+      <button class="btn btn-sec" style="width:auto;padding:10px 16px;font-size:14px;white-space:nowrap;flex-shrink:0;" onclick="downloadCSV()">📥 CSV出力</button>
+    </div>
+
+    <!-- ドライバー名管理 -->
+    <div class="card" style="border-left:3px solid var(--indigo);margin-bottom:18px;">
+      <div style="font-size:16px;font-weight:700;color:var(--indigo);margin-bottom:14px;">👤 ドライバー名管理</div>
+      <div id="admin-driver-list"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <input class="finp" type="text" id="new-driver-input" placeholder="ドライバー名を入力" style="flex:1;font-size:16px;padding:11px 14px;">
+        <button class="btn btn-p" style="width:auto;padding:11px 18px;font-size:15px;white-space:nowrap;" onclick="addDriver()">＋ 追加</button>
+      </div>
+    </div>
+
+    <!-- 送信履歴 -->
+    <div class="card" style="border-top:3px solid var(--green);margin-bottom:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:700;color:var(--green);">📋 送信履歴</div>
+        <button onclick="clearAllHistory()" style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer;padding:4px 8px;">全削除</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- 他社処分場リスト管理 -->
+    <div class="card" style="border-left:3px solid var(--orange);margin-bottom:18px;">
+      <div style="font-size:16px;font-weight:700;color:var(--orange);margin-bottom:14px;">🏭 他社処分場リスト管理</div>
+      <div id="admin-site-list"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <input class="finp" type="text" id="new-site-input" placeholder="処分場名を入力" style="flex:1;font-size:16px;padding:11px 14px;">
+        <button class="btn btn-p" style="width:auto;padding:11px 18px;font-size:15px;white-space:nowrap;" onclick="addSite()">＋ 追加</button>
+      </div>
+    </div>
+
+    <div class="mx-outer">
+      <table class="mx" id="matrix-table"><thead><tr id="matrix-head"></tr></thead><tbody id="matrix-body"></tbody></table>
+    </div>
+    <div style="height:20px;"></div>
+    <button class="btn btn-gh" style="font-size:15px;" onclick="showScreen('screen-start');setProgress(0);">🚛 ドライバー画面に戻る</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="modal-check">
+  <div class="bsheet"><div class="bhandle"></div>
+    <div class="mt">📷 写真が必要です</div>
+    <div class="mb" id="modal-check-msg"></div>
+    <button class="btn btn-p" style="font-size:16px;padding:16px;" onclick="closeModal('modal-check')">写真を追加する</button>
+  </div>
+</div>
+<div class="overlay" id="modal-reset">
+  <div class="bsheet"><div class="bhandle"></div>
+    <div class="mt">🔄 やり直し確認</div><div class="mb">記録した全データが消えます。本当に最初からやり直しますか？</div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-gh" style="flex:1;font-size:15px;" onclick="closeModal('modal-reset')">キャンセル</button><button class="btn btn-d" style="flex:1;font-size:15px;" onclick="resetAll()">やり直す</button></div>
+  </div>
+</div>
+<div class="overlay" id="modal-finish">
+  <div class="bsheet"><div class="bhandle"></div>
+    <div class="mt">🏭 他社処分場の確認</div>
+    <div class="mb" style="font-size:16px;margin-bottom:6px;">
+      <span id="modal-finish-num">1</span>件目の他社処分場はありますか？
+    </div>
+    <div style="font-size:13px;color:var(--text-3);margin-bottom:18px;">最大3件まで追加できます</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-p" style="font-size:17px;padding:17px;" onclick="doGoStep5()">
+        はい　→ 他社処分場へ移動する
+      </button>
+      <button class="btn btn-s" style="font-size:17px;padding:17px;" onclick="doFinishAll()">
+        いいえ → 実績を確認・送信する
+      </button>
+      <button class="btn btn-gh" style="font-size:15px;" onclick="closeModal('modal-finish')">戻る（入力を修正する）</button>
+    </div>
+  </div>
+</div>
+<div class="loading-sc" id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:18px;font-weight:700;margin-bottom:6px;">送信中...</div>
+  <div style="font-size:14px;color:#64748b;">しばらくお待ちください</div>
+</div>
+<div class="done-sc" id="done-screen">
+  <div style="font-size:64px;margin-bottom:20px;">✅</div>
+  <div style="font-size:26px;font-weight:700;margin-bottom:10px;line-height:1.35;">送信完了しました。<br>お疲れ様でした！</div>
+  <div style="font-size:14px;color:#64748b;margin-bottom:32px;" id="done-ts"></div>
+  <div style="background:rgba(255,255,255,.08);border-radius:var(--r);padding:16px 20px;width:100%;max-width:360px;border:1px solid rgba(255,255,255,.1);">
+    <div style="font-size:12px;color:#94a3b8;font-weight:600;margin-bottom:4px;">送信先</div>
+    <div style="font-size:12px;color:#cbd5e1;word-break:break-all;" id="done-url"></div>
+  </div>
+</div>
+
+<!-- ========== JAVASCRIPT ========== -->
+<script>
+// ============================================================
+const GAS_URL         = "https://script.google.com/macros/s/AKfycbzmeVaTZXQM2SQWvc2zUTXgf-b0DPz-bwVzXecYzVTnjtf5VreBOul5Ftm5UclquFXD/exec";
+const ADMIN_PIN       = "3150";
+const LS_KEY          = "haikibutsu_v9_state";
+const LS_SITE_LIST    = "haikibutsu_site_list";
+const DEFAULT_SITES   = ['鈴木工業','青南商事','青南商事（塩釜）'];
+const LS_DRIVER_LIST  = "haikibutsu_driver_list";
+const DEFAULT_DRIVERS = ['阿部 凌太','秋元 弘樹'];
+// ============================================================
+
+const CHECK_ITEMS = ['駐車・受付','回収物確認','回収作業（完了）','清掃','最終確認','マニフェスト処理','日報入力'];
+
+// ── 状態オブジェクト ──
+let S = {
+  driverName:'', customerName:'', opDate:'', currentStep:0,
+  ts:{},
+  gps:{},
+  cbm:0, kg:0,          // 自社処分場
+  otherSites:[],        // [{cbm,kg,arriveTime,leaveTime,gpsArrive}] 最大3件
+  currentSiteIdx:0,     // 現在編集中の他社処分場インデックス(0-based)
+  checks:new Array(7).fill(false),
+  checkTimes:new Array(7).fill(null),
+  photos:[],
+  skipStep6:false, modified:{}, overtimeFlag:false
+};
+let pinBuf = '';
+
+// ── ユーティリティ ──
+const now    = () => new Date();
+const fmt    = d  => d?new Date(d).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}):'--:--';
+const fmtS   = d  => d?new Date(d).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'--:--:--';
+const fmtHMS = d  => d?new Date(d).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'未完了';
+const fmtDT  = d  => {if(!d)return'';const x=new Date(d),p=n=>String(n).padStart(2,'0');return`${x.getFullYear()}-${p(x.getMonth()+1)}-${p(x.getDate())} ${p(x.getHours())}:${p(x.getMinutes())}:${p(x.getSeconds())}`;};
+const elMin  = (a,b)=>(!a||!b)?0:Math.round((new Date(b)-new Date(a))/60000);
+const minToHM= m=>m>=60?`${Math.floor(m/60)}時間${m%60}分`:`${m}分`;
+const chkOT  = e=>e&&(new Date(e).getHours()>12||(new Date(e).getHours()===12&&new Date(e).getMinutes()>0));
+const gpsStr = g=>g&&g.lat?`${g.lat.toFixed(5)},${g.lng.toFixed(5)}`:'取得なし';
+const mapsURL= g=>g&&g.lat?`https://www.google.com/maps?q=${g.lat},${g.lng}`:'';
+
+// ── GPS 取得（非同期・ノンブロッキング） ──
+function getGPS(callback){
+  if(!navigator.geolocation){callback('');return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>callback({lat:pos.coords.latitude,lng:pos.coords.longitude}),
+    ()=>callback(''),
+    {timeout:8000,maximumAge:30000}
+  );
+}
+function getGPSAndShow(stateKey, badgeId){
+  const badge=document.getElementById(badgeId);
+  if(badge){badge.className='gps-badge gps-ing';badge.textContent='📍 位置取得中...';}
+  getGPS(g=>{
+    S.gps[stateKey]=g;
+    saveLocal();
+    if(badge){
+      if(g&&g.lat){badge.className='gps-badge gps-ok';badge.textContent=`📍 ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}`;}
+      else{badge.className='gps-badge gps-ng';badge.textContent='📍 位置情報なし';}
+    }
+  });
+}
+
+// ── localStorage ──
+function saveLocal(){
+  try{
+    const data={...S};
+    // Date オブジェクトを ISO 文字列化
+    const ts={};Object.keys(data.ts).forEach(k=>{ts[k]=data.ts[k]?new Date(data.ts[k]).toISOString():null;});
+    const ct=data.checkTimes.map(t=>t?new Date(t).toISOString():null);
+    localStorage.setItem(LS_KEY,JSON.stringify({...data,ts,checkTimes:ct}));
+  }catch(e){}
+}
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    const ts={};Object.keys(data.ts).forEach(k=>{ts[k]=data.ts[k]?new Date(data.ts[k]):null;});
+    const ct=(data.checkTimes||[]).map(t=>t?new Date(t):null);
+    // otherSites の Date 文字列を new Date() に変換
+    const otherSites=(data.otherSites||[]).map(s=>({
+      ...s,
+      departTime: s.departTime ? new Date(s.departTime) : null,
+      arriveTime: s.arriveTime ? new Date(s.arriveTime) : null,
+      leaveTime:  s.leaveTime  ? new Date(s.leaveTime)  : null,
+    }));
+    return {...data,ts,checkTimes:ct,photos:data.photos||[],memo:data.memo||'',otherSites,currentSiteIdx:data.currentSiteIdx||0};
+  }catch(e){return null;}
+}
+function clearLocal(){try{localStorage.removeItem(LS_KEY);}catch(e){}}
+
+// ── 復元 ──
+function resumeData(){
+  const saved=loadLocal();
+  if(!saved)return;
+  S={...saved};
+  document.getElementById('resume-banner').style.display='none';
+  document.getElementById('driver-select').value=S.driverName||'';
+  document.getElementById('customer-name').value=S.customerName||'';
+  // UIへ反映
+  restoreUI();
+}
+function clearAndFresh(){
+  clearLocal();
+  document.getElementById('resume-banner').style.display='none';
+}
+function restoreUI(){
+  const step=S.currentStep||0;
+  if(step===0||step===undefined){ showScreen('screen-start'); setProgress(0); return; }
+  initChecklist();
+  showScreen('screen-main');
+  document.getElementById('prog-wrap').style.display='block';
+  document.getElementById('header-step').textContent='業務タイムライン';
+  // 完了済みステップを再現
+  ['s1','s2','s3','s4','s5'].forEach(id=>tlSetState(id,'locked'));
+  tlSetEndState('locked');
+  // s1（事業所出発）は廃止：出発時刻はstartDayで記録済み
+  if(step>=1){
+    // s2（顧客先到着）から開始
+    if(S.ts.s2Start){
+      const el=document.getElementById('time-s2'); if(el) el.textContent=fmt(S.ts.s2Start);
+      if(step>2) tlSetState('s2','done'); else tlSetState('s2','active');
+    } else {
+      tlSetState('s2','active');
+    }
+  }
+  if(step>=3){ if(step>3) tlSetState('s3','done'); else tlSetState('s3','active'); }
+  if(step>=4 && S.ts.s3Start){
+    const el=document.getElementById('time-s4'); if(el) el.textContent=fmt(S.ts.s3Start);
+    if(step>4) tlSetState('s4','done'); else tlSetState('s4','active');
+  }
+  if(step>=5 && S.ts.s4Start){
+    const el=document.getElementById('time-s5'); if(el) el.textContent=fmt(S.ts.s4Start);
+    tlSetState('s5','done');
+    const qw=document.getElementById('qty-wrap-s5');
+    if(qw) qw.style.display='block';
+    const cbmEl=document.getElementById('qty-cbm'); if(cbmEl) cbmEl.textContent=S.cbm.toFixed(1);
+    const kgEl=document.getElementById('qty-kg');   if(kgEl)  kgEl.textContent=S.kg;
+  }
+  // 他社処分場を復元
+  (S.otherSites||[]).forEach((site,i)=>{
+    addOtherSiteSection(i, site.name||'処分場'+(i+1));
+    if(site.arriveTime){
+      const ba=document.getElementById('btn-other-arr-'+i);
+      if(ba){ ba.classList.add('done'); ba.classList.remove('active-btn'); }
+      const ta=document.getElementById('time-other-arr-'+i);
+      if(ta) ta.textContent=fmt(site.arriveTime);
+      const qo=document.getElementById('qty-other-'+i);
+      if(qo){ qo.style.display='block'; }
+      const c2=document.getElementById('qty2-cbm-'+i); if(c2) c2.textContent=site.cbm.toFixed(1);
+      const k2=document.getElementById('qty2-kg-'+i);  if(k2) k2.textContent=site.kg;
+      if(site.leaveTime){
+        const co=document.getElementById('card-other-'+i);
+        const no=document.getElementById('node-other-'+i);
+        if(co){ co.classList.remove('active'); co.classList.add('done'); }
+        if(no){ no.classList.remove('active'); no.classList.add('done'); }
+      }
+    }
+  });
+  if(step===99) tlSetEndState('active');
+  updateProgressFromStep(Math.min(step,6));
+  renderPhotoPreview(1);
+}
+
+
+
+// ── バイブレーション（E） ──
+function vib(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+// ── トースト通知 ──
+let _toastTimer=null;
+function showToast(msg,ms){
+  ms=ms||2000;
+  const el=document.getElementById('app-toast');
+  if(!el)return;
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('show'),ms);
+}
+
+// ── 自動復元（C） ──
+function autoResume(){
+  try{
+    const saved=loadLocal();
+    if(!saved||!(saved.currentStep>0)) return false;
+    S={...saved};
+    // ドライバー・顧客名をフォームに反映
+    const dsel=document.getElementById('driver-select');
+    const cinp=document.getElementById('customer-name');
+    if(dsel) dsel.value=S.driverName||'';
+    if(cinp) cinp.value=S.customerName||'';
+    restoreUI();
+    // 「新規開始」ボタンを表示
+    const nb=document.getElementById('new-start-btn');
+    if(nb) nb.style.display='block';
+    // トーストで通知
+    showToast('📍 前回の続きから再開しました');
+    return true;
+  }catch(e){ return false; }
+}
+
+// ── 日付初期化 ──
+(function(){
+  const d=now(),p=n=>String(n).padStart(2,'0');
+  S.opDate=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+  const str=d.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const e1=document.getElementById('today-disp'),e2=document.getElementById('today-disp2');
+  if(e1)e1.textContent=str;if(e2)e2.textContent=str;
+  // ドライバードロップダウンを構築
+  buildDriverSelect();
+  // 自動復元（バナー不要・即座に再開）
+  autoResume();
+})();
+
+// ── ライブ時計 ──
+function tickClock(){
+  const t=fmtS(now());
+  ['live-clock','s1-clock','s3-clock','s5-clock'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});
+  const hc=document.getElementById('hd-clock');if(hc)hc.textContent=t;
+}
+setInterval(tickClock,1000);tickClock();
+
+// ── 画面遷移 ──
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active','fade-in'));
+  const el=document.getElementById(id);el.classList.add('active');
+  setTimeout(()=>el.classList.add('fade-in'),10);
+  window.scrollTo(0,0);
+}
+function setProgress(step){
+  const progWrap=document.getElementById('prog-wrap');
+  if(progWrap) progWrap.style.display=step>0?'block':'none';
+  // 5分割バー（ps1〜ps5）を更新
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('ps'+i);
+    if(!el) continue; // null安全
+    el.classList.remove('done','active');
+    if(i<step) el.classList.add('done');
+    else if(i===step) el.classList.add('active');
+  }
+  if(step>0){
+    const numEl=document.getElementById('prog-num');
+    if(numEl){ numEl.textContent=step; numEl.className='prog-step-num active'; }
+    const labelEl=document.getElementById('prog-label');
+    if(labelEl) labelEl.textContent='業務中';
+    const fracEl=document.getElementById('prog-fraction');
+    if(fracEl) fracEl.textContent=step+' / 5';
+  }
+  const hs=document.getElementById('header-step');
+  if(hs) hs.textContent=step>0?'業務タイムライン':'本日の業務';
+  updateFixedBtn(step);
+}
+
+// ── バリデーション ──
+function onDriverChange(){const v=document.getElementById('driver-select').value;document.getElementById('driver-error').style.display=v?'none':'block';document.getElementById('driver-select').classList.toggle('err',!v);}
+
+// ── チェックリスト ──
+function initChecklist(){
+  const el=document.getElementById('checklist');el.innerHTML='';
+  CHECK_ITEMS.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='ci';d.id='ci'+i;
+    // 写真ゾーンがある項目（i=1: 回収物確認）はチェックボックス領域のみclickターゲット
+    if(i===1){
+      d.innerHTML=`
+        <div class="cibox" id="cb${i}" style="cursor:pointer;flex-shrink:0;margin-top:2px;"></div>
+        <div style="flex:1">
+          <div class="cin" style="cursor:pointer;">${i+1}. ${item}</div>
+          <span class="cit" id="ct${i}">タップで記録</span>
+          <div class="photo-zone" id="photo-zone-${i}">
+            <div class="photo-lbl">📷 回収物の写真 <span style="color:var(--red);font-size:11px;font-weight:700;">必須</span></div>
+            <div class="photo-btn-row">
+              <button class="photo-btn-cam" id="photo-btn-cam-${i}" type="button">📷 カメラ撮影</button>
+              <button class="photo-btn-lib" id="photo-btn-lib-${i}" type="button">🖼 ライブラリ</button>
+            </div>
+            <input class="photo-input" type="file" accept="image/*" capture="environment" id="photo-input-cam-${i}" multiple style="display:none;">
+            <input class="photo-input" type="file" accept="image/*" id="photo-input-lib-${i}" multiple style="display:none;">
+            <div class="photo-preview-wrap" id="photo-preview-${i}"></div>
+            <div class="photo-count" id="photo-count-${i}"></div>
+          </div>
+        </div>`;
+      // cibox と cin にもtoggleCheckを設定
+      const cibox1 = d.querySelector('#cb'+i);
+      const cin1   = d.querySelector('.cin');
+      if(cibox1) cibox1.onclick = ()=>toggleCheck(i);
+      if(cin1)   cin1.onclick   = ()=>toggleCheck(i);
+    } else {
+      d.onclick=()=>toggleCheck(i);
+      d.innerHTML=`<div class="cibox" id="cb${i}"></div><div style="flex:1"><div class="cin">${i+1}. ${item}</div><span class="cit" id="ct${i}">タップで記録</span></div>`;
+    }
+    el.appendChild(d);
+    // i===1: appendChild後にinputのイベントリスナーを設定
+    if(i===1){
+      const camBtn = document.getElementById('photo-btn-cam-'+i);
+      const libBtn = document.getElementById('photo-btn-lib-'+i);
+      const camInp = document.getElementById('photo-input-cam-'+i);
+      const libInp = document.getElementById('photo-input-lib-'+i);
+      if(camBtn && camInp){
+        camBtn.addEventListener('click', ()=>camInp.click());
+        camInp.addEventListener('change', (ev)=>handlePhotoSelect(ev, i));
+      }
+      if(libBtn && libInp){
+        libBtn.addEventListener('click', ()=>libInp.click());
+        libInp.addEventListener('change', (ev)=>handlePhotoSelect(ev, i));
+      }
+    }
+  });
+  // 既存チェック状態を反映
+  CHECK_ITEMS.forEach((_,i)=>{
+    if(S.checks[i]&&S.checkTimes[i]){
+      const div=document.getElementById('ci'+i),box=document.getElementById('cb'+i),ct=document.getElementById('ct'+i);
+      if(div)div.classList.add('ck');
+      if(box)box.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      if(ct)ct.textContent=fmtHMS(S.checkTimes[i]);
+    }
+  });
+  // 既存写真を復元
+  renderPhotoPreview(1);
+  updateCheckCount();
+}
+function toggleCheck(i){
+  vib(S.checks[i]?0:30);
+  S.checks[i]=!S.checks[i];S.checkTimes[i]=S.checks[i]?now():null;
+  const div=document.getElementById('ci'+i),box=document.getElementById('cb'+i),ct=document.getElementById('ct'+i);
+  if(S.checks[i]){
+    div.classList.add('ck');
+    box.innerHTML=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    ct.textContent=fmtHMS(S.checkTimes[i]);
+  } else {
+    div.classList.remove('ck');box.innerHTML='';ct.textContent='タップで記録';
+  }
+  updateCheckCount();saveLocal();
+  // 全チェック完了 → s4（処分場出発）を解放（写真チェックはs4タップ時に実施）
+  const card4 = document.getElementById('card-s4');
+  if(S.checks.every(Boolean)){
+    if(card4 && card4.classList.contains('locked')){
+      tlSetState('s4','active');
+      setTimeout(()=>{ scrollToCard(card4); }, 60);
+    }
+  } else {
+    if(card4 && !card4.classList.contains('done') && !card4.classList.contains('locked')){
+      tlSetState('s4','locked');
+    }
+  }
+}
+function updateCheckCount(){document.getElementById('check-count').textContent=`${S.checks.filter(Boolean).length} / 7 完了`;}
+
+// ── 数量 ──
+function adjQty(t,d){if(t==='cbm'){S.cbm=Math.max(0,Math.round((S.cbm+d)*10)/10);document.getElementById('qty-cbm').textContent=S.cbm.toFixed(1);}else{S.kg=Math.max(0,S.kg+d);document.getElementById('qty-kg').textContent=S.kg;}saveLocal();}
+function adjQty2(t,d){
+  const site=S.otherSites[S.currentSiteIdx];
+  if(!site)return;
+  if(t==='cbm'){site.cbm=Math.max(0,Math.round((site.cbm+d)*10)/10);document.getElementById('qty2-cbm').textContent=site.cbm.toFixed(1);}
+  else{site.kg=Math.max(0,site.kg+d);document.getElementById('qty2-kg').textContent=site.kg;}
+  saveLocal();
+}
+
+// ── フロー ──
+function startDay(){
+  const sel=document.getElementById('driver-select').value;
+  if(!sel){
+    document.getElementById('driver-error').style.display='block';
+    document.getElementById('driver-select').classList.add('err');
+    document.getElementById('driver-select').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  S.driverName   = sel;
+  S.customerName = document.getElementById('customer-name').value.trim();
+  S.currentStep  = 1;
+  // 「出発する」タップ時刻 = 事業所出発時刻として記録
+  S.ts.s1Start = now();
+  getGPS(g=>{ S.gps.s1Start=g; saveLocal(); });
+  initChecklist();
+  showScreen('screen-main');
+  document.getElementById('prog-wrap').style.display='block';
+  updateProgressFromStep(1);
+  document.getElementById('header-step').textContent = '業務タイムライン';
+  // 全セクションをリセット（s1は廃止、s2が最初）
+  ['s2','s3','s4','s5'].forEach(id=>tlSetState(id,'locked'));
+  tlSetEndState('locked');
+  document.getElementById('other-sites-area').innerHTML='';
+  // s2（顧客先到着）を最初のアクティブに
+  tlSetState('s2','active');
+  saveLocal();
+  setTimeout(()=>{ scrollToCard(document.getElementById('card-s2')); }, 60);
+  // 「新規開始」ボタンを表示
+  const nb=document.getElementById('new-start-btn');
+  if(nb) nb.style.display='block';
+}
+function arrive1(){
+  S.ts.s1End=S.ts.s2Start=now();S.currentStep=2;
+  setProgress(2);showScreen('screen-main');
+  (document.getElementById('s2-arrive')||{}).textContent=fmt(S.ts.s2Start);
+  getGPSAndShow('s2Start','s2-arr-gps');
+  saveLocal();
+}
+function completeCollection(){ /* v10タイムラインでは未使用 */ }
+function forceComplete(){ /* v10タイムラインでは未使用 */ }
+function arriveDisposal(){
+  S.ts.s3End=S.ts.s4Start=now();S.currentStep=4;S.cbm=0;S.kg=0;
+  document.getElementById('qty-cbm').textContent='0.0';document.getElementById('qty-kg').textContent='0';
+  setProgress(4);showScreen('screen-main');
+  (document.getElementById('s4-arrive')||{}).textContent=fmt(S.ts.s4Start);
+  getGPSAndShow('s4Start','s4-arr-gps');
+  saveLocal();
+}
+function unloadComplete(btn){
+  S.ts.s4End=now();
+  getGPS(g=>{S.gps.s4End=g;saveLocal();});
+  S.currentStep=5;
+  updateProgressFromStep(5);
+  // 荷下ろし完了ボタンを「完了済み」グレー表示に（誤操作防止）
+  if(btn){
+    btn.disabled=true;
+    btn.style.background='var(--surface-2)';
+    btn.style.color='var(--text-3)';
+    btn.style.cursor='default';
+    btn.textContent='✅ 荷下ろし完了済み';
+  }
+  document.getElementById('modal-finish-num').textContent=1;
+  document.getElementById('modal-finish').classList.add('active');
+}
+function doGoStep5(){
+  // modal-finishを閉じて、処分場選択モーダルを開く
+  closeModal('modal-finish');
+  const siteNum = S.otherSites.length + 1;
+  document.getElementById('modal-site-num').textContent = siteNum;
+  buildSiteSelect('site-select-dropdown');
+  document.getElementById('modal-site-select').classList.add('active');
+}
+function confirmSiteSelect(){
+  const sel = document.getElementById('site-select-dropdown');
+  const siteName = sel ? sel.value : '';
+  if(!siteName){
+    sel.style.borderColor='var(--red)';
+    setTimeout(()=>{ sel.style.borderColor=''; },1200);
+    return;
+  }
+  closeModal('modal-site-select');
+  const siteIdx = S.otherSites.length;
+  S.currentSiteIdx = siteIdx;
+  const deptTime = now();
+  S.otherSites.push({name:siteName, cbm:0, kg:0, departTime:deptTime, arriveTime:null, gpsDepart:null, gpsArrive:null, leaveTime:null});
+  getGPS(g=>{ S.otherSites[siteIdx].gpsDepart=g; saveLocal(); });
+  // タイムラインに他社処分場セクションを追加
+  tlSetEndState('locked');
+  addOtherSiteSection(siteIdx, siteName);
+  S.currentStep=5;
+  updateProgressFromStep(5);
+  saveLocal();
+}
+function doFinishAll(){
+  closeModal('modal-finish');
+  S.skipStep6=true;
+  if(!S.ts.s4End) S.ts.s4End=now();
+  S.currentStep=99;
+  getGPS(g=>{S.gps.s4End=g;saveLocal();});
+  tlSetEndState('active');
+  updateProgressFromStep(99);
+  saveLocal();
+}
+function arriveOther(){
+  const site=S.otherSites[S.currentSiteIdx];
+  if(!site) return;
+  site.arriveTime=now();
+  S.currentStep=6;
+  setProgress(6);showScreen('screen-main');
+  // 画面表示更新
+  const siteNum=S.currentSiteIdx+1;
+  (document.getElementById('s6-site-num')||{}).textContent=siteNum;
+  (document.getElementById('s6-arrive')||{}).textContent=fmt(site.arriveTime);
+  document.getElementById('qty2-cbm').textContent=site.cbm.toFixed(1);
+  document.getElementById('qty2-kg').textContent=site.kg;
+  getGPS(g=>{site.gpsArrive=g;
+    const badge=document.getElementById('s6-arr-gps');
+    if(badge){if(g&&g.lat){badge.className='gps-badge gps-ok';badge.textContent='📍 '+g.lat.toFixed(4)+', '+g.lng.toFixed(4);}else{badge.className='gps-badge gps-ng';badge.textContent='📍 位置情報なし';}}
+    saveLocal();
+  });
+  saveLocal();
+}
+function completeAll(){
+  // tlOtherComplete に統合されたため、このラッパーのみ残す
+  const site=S.otherSites[S.currentSiteIdx];
+  if(site){ site.leaveTime=now(); getGPS(g=>{if(site)site.gpsLeave=g;saveLocal();}); }
+  if(S.otherSites.length>=3){
+    tlSetEndState('active'); saveLocal();
+  } else {
+    document.getElementById('modal-finish-num').textContent=S.otherSites.length+1;
+    document.getElementById('modal-finish').classList.add('active');
+  }
+  saveLocal();
+}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function confirmReset(){document.getElementById('modal-reset').classList.add('active');}
+function resetAll(){
+  closeModal('modal-reset');clearLocal();
+  S={driverName:'',customerName:'',opDate:S.opDate,currentStep:0,ts:{},gps:{},cbm:0,kg:0,otherSites:[],currentSiteIdx:0,checks:new Array(7).fill(false),checkTimes:new Array(7).fill(null),photos:[],memo:'',skipStep6:false,modified:{},overtimeFlag:false};
+  document.getElementById('driver-select').value='';document.getElementById('driver-select').classList.remove('err');document.getElementById('driver-error').style.display='none';document.getElementById('customer-name').value='';document.getElementById('btn-submit').disabled=false;document.getElementById('done-screen').classList.remove('active');
+  showScreen('screen-start');setProgress(0);
+}
+function markMod(key){
+  S.modified[key]=true;
+  const inputMap={cbm:'edit-cbm',kg:'edit-kg'};
+  const badgeMap={cbm:'mod-badge-cbm',kg:'mod-badge-kg'};
+  if(inputMap[key]){
+    const el=document.getElementById(inputMap[key]);
+    if(el) el.classList.add('mod');
+  }
+  if(badgeMap[key]){
+    const badge=document.getElementById(badgeMap[key]);
+    if(badge) badge.style.display='inline-flex';
+  }
+  // 他社処分場はキーが "other-N-cbm" 形式
+  const otherMatch=key.match(/^other-(\d+)-(cbm|kg)$/);
+  if(otherMatch){
+    const idx=parseInt(otherMatch[1]),field=otherMatch[2];
+    const el=document.getElementById(`edit-other-${idx}-${field}`);
+    if(el) el.classList.add('mod');
+    const badge=document.getElementById(`mod-badge-other-${idx}-${field}`);
+    if(badge) badge.style.display='inline-flex';
+  }
+}
+
+// ── 実績画面 ──
+const TLC={1:'#4f46e5',2:'#ea580c',3:'#0369a1',4:'#16a34a',5:'#4f46e5',6:'#ea580c'};
+// 所要時間に応じたカラーとバー幅（最大240分=100%）
+function durColor(min){
+  if(min<=30)  return {c:'#16a34a',bg:'#f0fdf4',tc:'#15803d'};  // 緑：短い
+  if(min<=90)  return {c:'#d97706',bg:'#fffbeb',tc:'#92400e'};  // 琥珀：中程度
+  return       {c:'#dc2626',bg:'#fef2f2',tc:'#991b1b'};          // 赤：長い
+}
+function barWidth(min){return Math.min(100,Math.round(min/240*100))+'%';}
+
+function makeTLCard(step,label,sTs,eTs,extra,modKeys){
+  const mod=modKeys&&modKeys.some(k=>S.modified[k]);
+  const badge=mod?`<span class="badge-mod">修正済</span>`:'';
+  const dur=elMin(sTs,eTs);
+  const {c,bg,tc}=durColor(dur);
+  return `<div class="tlc">
+    <div class="tlh">
+      <div class="tldot" style="background:${TLC[step]};"></div>
+      <div class="tlhl">STEP ${step}：${label}${badge}</div>
+    </div>
+    <div class="tlb">
+      <div class="tl-dur-hero">
+        <span class="tl-dur-num" style="color:${tc};">${dur}</span><span class="tl-dur-unit">分</span>
+      </div>
+      <div class="tl-bar-wrap">
+        <div class="tl-bar-fill" style="width:${barWidth(dur)};background:${c};"></div>
+      </div>
+      <div class="tl-time-row">
+        <span class="tl-time-chip">${fmt(sTs)}</span>
+        <span class="tl-time-arrow">→</span>
+        <span class="tl-time-chip">${fmt(eTs)}</span>
+      </div>
+      ${extra||''}
+    </div>
+  </div>`;
+}
+function makeCheckDetail(){
+  let prev=S.ts.s2Start,rows='';
+  CHECK_ITEMS.forEach((nm,i)=>{
+    const ct=S.checkTimes[i],done=S.checks[i]&&ct;
+    const el=(done&&prev)?`前作業から ${elMin(prev,ct)}分`:'';
+    if(done)prev=ct;
+    rows+=`<div class="tti ${done?'done':''}"><div class="ttn">${i+1}</div><div class="ttnm">${nm}</div><div style="text-align:right;"><div class="tttm">${done?fmtHMS(ct):'未完了'}</div>${el?`<div class="ttel">${el}</div>`:''}</div></div>`;
+  });
+  const missed=CHECK_ITEMS.filter((_,i)=>!S.checks[i]);
+  const note=missed.length>0?`<div style="margin-top:10px;padding:8px 12px;background:var(--red-l);border-radius:var(--rsm);font-size:13px;font-weight:600;color:var(--red);">未完了：${missed.join('、')}</div>`:`<div style="margin-top:10px;padding:8px 12px;background:var(--green-l);border-radius:var(--rsm);font-size:13px;font-weight:700;color:var(--green);">全7項目 完了 ✓</div>`;
+  return `<div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;"><div class="sec-lbl" style="margin-bottom:8px;">⏱ 各作業の完了時刻</div>${rows}${note}</div>`;
+}
+function buildResult(){
+  S.modified={};
+  const ts=S.ts,endTs=S.skipStep6?ts.s4End:ts.s6End,totalMin=elMin(ts.s1Start,endTs);
+  document.getElementById('result-date').textContent=new Date(ts.s1Start).toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('result-driver').textContent=S.driverName;
+  document.getElementById('result-customer').textContent=S.customerName||'（未入力）';
+  document.getElementById('total-banner').innerHTML=`<div class="tot-card"><div><div class="tot-lbl">⏱ トータル所要時間</div><div class="tot-val">${minToHM(totalMin)}</div><div class="tot-sub">${fmt(ts.s1Start)} → ${fmt(endTs)}（${totalMin}分）</div></div><div style="font-size:40px;">🕐</div></div>`;
+  const byT=chkOT(endTs),byD=elMin(ts.s1Start,endTs)>240;S.overtimeFlag=byT||byD;
+  const ob=document.getElementById('overtime-banner');
+  if(S.overtimeFlag){let r=[];if(byT)r.push(`終了 ${fmt(endTs)}（12:00超過）`);if(byD)r.push(`総稼働 ${totalMin}分（基準4時間超）`);ob.innerHTML=`<div class="ot-card"><div style="font-size:20px;flex-shrink:0;">⏰</div><div><div class="ot-title">⚠️ 時間超過あり</div><div class="ot-msg">※ 他社処分場対応等による時間超過<br>${r.join(' / ')}</div></div></div>`;}else{ob.innerHTML='';}
+  // GPS 表示補助関数
+  const gpsHtml=key=>{const g=S.gps[key];if(!g||!g.lat)return'';return`<div class="gps-row">📍 ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}</div>`;};
+  const gpsFromObj=g=>{if(!g||!g.lat)return'';return`<div class="gps-row">📍 ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}</div>`;};
+  let html=makeTLCard(1,'事業所→顧客先',ts.s1Start,ts.s1End,gpsHtml('s1Start'));
+  html+=makeTLCard(2,'顧客先 回収作業',ts.s2Start,ts.s2End,makeCheckDetail()+gpsHtml('s2Start'));
+  html+=makeTLCard(3,'顧客先→自社処分場',ts.s3Start,ts.s3End,gpsHtml('s3Start'));
+  html+=makeTLCard(4,'自社処分場 荷下ろし',ts.s4Start,ts.s4End,'',['cbm','kg']);
+  // 他社処分場：最大3件を動的に追加
+  (S.otherSites||[]).forEach((site,i)=>{
+    // 実績入力がない他社処分場はサマリに表示しない
+    if(!(site.cbm>0||site.kg>0)) return;
+    const stepLabel5=`STEP 5-${i+1}`;
+    const stepLabel6=`STEP 6-${i+1}`;
+    // 移動カード
+    html+=`<div class="tlc">
+      <div class="tlh">
+        <div class="tldot" style="background:#4f46e5;"></div>
+        <div class="tlhl">${i===0?'自社':'他社'+(i)+'件目'}→他社処分場 ${i+1}件目</div>
+      </div>
+      <div class="tlb">
+        <div class="tl-dur-hero">
+          <span class="tl-dur-num" style="color:#4f46e5;">${site.arriveTime?elMin(site.departTime,site.arriveTime):'-'}</span><span class="tl-dur-unit">分</span>
+        </div>
+        <div class="tl-bar-wrap"><div class="tl-bar-fill" style="width:${site.arriveTime?barWidth(elMin(site.departTime,site.arriveTime)):'0%'};background:#4f46e5;"></div></div>
+        <div class="tl-time-row">
+          <span class="tl-time-chip">${fmt(site.departTime)}</span>
+          <span class="tl-time-arrow">→</span>
+          <span class="tl-time-chip">${fmt(site.arriveTime)}</span>
+        </div>
+        ${gpsFromObj(site.gpsDepart)}
+      </div>
+    </div>`;
+    // 荷下ろしカード
+    const dur6=site.leaveTime?elMin(site.arriveTime,site.leaveTime):0;
+    const {c:c6,tc:tc6}=durColor(dur6);
+    html+=`<div class="tlc">
+      <div class="tlh">
+        <div class="tldot" style="background:#ea580c;"></div>
+        <div class="tlhl">他社処分場 ${i+1}件目 荷下ろし</div>
+        <div class="tlhd" style="font-size:16px;">${site.cbm.toFixed(1)}㎥ / ${site.kg}kg</div>
+      </div>
+      <div class="tlb">
+        <div class="tl-dur-hero">
+          <span class="tl-dur-num" style="color:${tc6};">${dur6}</span><span class="tl-dur-unit">分</span>
+        </div>
+        <div class="tl-bar-wrap"><div class="tl-bar-fill" style="width:${barWidth(dur6)};background:${c6};"></div></div>
+        <div class="tl-time-row">
+          <span class="tl-time-chip">${fmt(site.arriveTime)}</span>
+          <span class="tl-time-arrow">→</span>
+          <span class="tl-time-chip">${site.leaveTime?fmt(site.leaveTime):'--:--'}</span>
+        </div>
+        ${gpsFromObj(site.gpsArrive)}
+      </div>
+    </div>`;
+  });
+  document.getElementById('result-tl').innerHTML=html;
+  renderQty();
+  // 自社処分場の修正フォーム初期値セット（実績値から）
+  const ecbm=document.getElementById('edit-cbm'); if(ecbm) ecbm.value=S.cbm.toFixed(1);
+  const ekg =document.getElementById('edit-kg');  if(ekg)  ekg.value=S.kg;
+  // 修正バッジをリセット（buildResult時は未修正状態）
+  ['mod-badge-cbm','mod-badge-kg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  // 他社処分場の修正フォームを生成（実績値を初期値に）
+  renderOtherSiteEdits();
+  // 修正セクションはデフォルト非表示（openクラスを外す）
+  const editBody=document.getElementById('edit-body');
+  const editIcon=document.getElementById('edit-toggle-icon');
+  if(editBody){ editBody.classList.remove('open'); }
+  if(editIcon){ editIcon.classList.remove('open'); }
+  // メモ欄：値を復元、折りたたみ状態
+  const memoInp=document.getElementById('memo-input');
+  const memoCnt=document.getElementById('memo-count');
+  const memoBody=document.getElementById('memo-body');
+  const memoIcon=document.getElementById('memo-toggle-icon');
+  if(memoInp){ memoInp.value=S.memo||''; }
+  if(memoCnt){ memoCnt.textContent=(S.memo||'').length+' / 200'; }
+  if(memoBody){ memoBody.classList.remove('open'); }
+  if(memoIcon){ memoIcon.classList.remove('open'); }
+}
+function renderQty(){
+  const mb=k=>S.modified[k]?`<span style="display:inline-flex;align-items:center;gap:3px;background:#fef3c7;color:#92400e;border:1.5px solid #fbbf24;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-left:6px;">✏️ 修正済</span>`:'';
+  const sites=S.otherSites||[];
+  const otherCbm=sites.reduce((a,s)=>a+s.cbm,0);
+  const otherKg =sites.reduce((a,s)=>a+s.kg, 0);
+  const tc=S.cbm+otherCbm, tw=S.kg+otherKg;
+  let h=`<div class="tlc"><div class="tlh"><div class="tldot" style="background:#7c3aed;"></div><div class="tlhl">回収量サマリ</div></div><div class="tlb">
+    <div class="qsr"><span class="qsk">自社処分場 数量</span><span class="qsv">${S.cbm.toFixed(1)} ㎥${mb('cbm')}</span></div>
+    <div class="qsr"><span class="qsk">自社処分場 重量</span><span class="qsv">${S.kg} kg${mb('kg')}</span></div>`;
+  sites.forEach((site,i)=>{
+    // 実績入力がある場合のみ表示（③）
+    if(site.cbm>0||site.kg>0){
+      const siteLabel=site.name?`他社処分場${i+1}（${site.name}）`:`他社処分場${i+1}`;
+      h+=`<div class="qsr"><span class="qsk">${siteLabel} 数量</span><span class="qsv">${site.cbm.toFixed(1)} ㎥</span></div>
+      <div class="qsr"><span class="qsk">${siteLabel} 重量</span><span class="qsv">${site.kg} kg</span></div>`;
+    }
+  });
+  if(sites.length>0){
+    h+=`<div class="divider" style="margin:8px 0;"></div>
+    <div class="qsr"><span class="qsk" style="color:var(--text);font-size:15px;">合計 数量</span><span class="qsv" style="font-size:26px;">${tc.toFixed(1)} ㎥</span></div>
+    <div class="qsr"><span class="qsk" style="color:var(--text);font-size:15px;">合計 重量</span><span class="qsv" style="font-size:26px;">${tw} kg</span></div>`;
+  }
+  h+=`</div></div>`;
+  document.getElementById('result-qty').innerHTML=h;
+}
+function renderOtherSiteEdits(){
+  const sites=S.otherSites||[];
+  const container=document.getElementById('edit-other-sites');
+  if(!container)return;
+  // 実績入力がある他社処分場のみ抽出（数量 or 重量 > 0）
+  const activeSites=sites.map((s,i)=>({site:s,idx:i})).filter(o=>o.site.cbm>0||o.site.kg>0);
+  if(activeSites.length===0){ container.innerHTML=''; return; }
+  let html='';
+  activeSites.forEach(({site,idx:i})=>{
+    const name=site.name||`他社処分場${i+1}`;
+    const modCbm=S.modified[`other-${i}-cbm`];
+    const modKg =S.modified[`other-${i}-kg`];
+    html+=`
+    <div style="margin-bottom:16px;padding:14px 14px 10px;background:var(--orange-l);border-radius:var(--rsm);border:1px solid #fed7aa;">
+      <div style="font-size:13px;font-weight:700;color:var(--orange);margin-bottom:12px;">🏭 ${name}</div>
+      <div class="edit-field-wrap">
+        <div class="edit-field-header">
+          <label class="edit-field-label">数量（㎥）</label>
+          <span class="edit-modified-label" id="mod-badge-other-${i}-cbm" style="display:${modCbm?'inline-flex':'none'};">✏️ 修正済</span>
+        </div>
+        <input class="ei${modCbm?' mod':''}" type="number" id="edit-other-${i}-cbm"
+          value="${site.cbm.toFixed(1)}" step="0.1" min="0"
+          oninput="editOtherSite(${i},'cbm',this.value);markMod('other-${i}-cbm')">
+      </div>
+      <div class="edit-field-wrap" style="margin-bottom:0;">
+        <div class="edit-field-header">
+          <label class="edit-field-label">重量（kg）</label>
+          <span class="edit-modified-label" id="mod-badge-other-${i}-kg" style="display:${modKg?'inline-flex':'none'};">✏️ 修正済</span>
+        </div>
+        <input class="ei${modKg?' mod':''}" type="number" id="edit-other-${i}-kg"
+          value="${site.kg}" step="10" min="0"
+          oninput="editOtherSite(${i},'kg',this.value);markMod('other-${i}-kg')">
+      </div>
+    </div>`;
+  });
+  container.innerHTML=html;
+}
+function editOtherSite(idx,key,val){
+  const site=S.otherSites[idx];
+  if(!site)return;
+  if(key==='cbm') site.cbm=Math.max(0,parseFloat(val)||0);
+  else site.kg=Math.max(0,parseFloat(val)||0);
+  renderQty(); // サマリに即反映
+  saveLocal();
+}
+function applyEdits(){
+  // 自社処分場
+  const cbmEl=document.getElementById('edit-cbm');
+  const kgEl =document.getElementById('edit-kg');
+  if(cbmEl) S.cbm=Math.max(0,parseFloat(cbmEl.value)||0);
+  if(kgEl)  S.kg =Math.max(0,parseFloat(kgEl.value)||0);
+  renderQty();
+  saveLocal();
+  // ボタンフィードバック
+  const btn=event.target.closest('button');
+  if(btn){
+    const orig=btn.textContent;
+    btn.style.background='var(--green)'; btn.textContent='✅ 反映しました';
+    setTimeout(()=>{ btn.style.background=''; btn.textContent=orig; },1800);
+  }
+  // 回収量サマリへスクロール
+  const qtyEl=document.getElementById('result-qty');
+  if(qtyEl) qtyEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── ペイロード ──
+function buildPayload(){
+  const ts=S.ts,g=S.gps,missed=CHECK_ITEMS.filter((_,i)=>!S.checks[i]);
+  const endTs=S.skipStep6?ts.s4End:ts.s6End,totalMin=elMin(ts.s1Start,endTs);
+  return {
+    timestamp:fmtDT(now()),operation_date:S.opDate,
+    driver_name:S.driverName,customer_name:S.customerName||'（未入力）',
+    overtime_flag:S.overtimeFlag?'超過あり':'正常',
+    step1_start:fmt(ts.s1Start),step1_end:fmt(ts.s1End),step1_duration:elMin(ts.s1Start,ts.s1End),
+    step1_start_gps:gpsStr(g.s1Start),
+    step2_start:fmt(ts.s2Start),step2_end:fmt(ts.s2End),step2_duration:elMin(ts.s2Start,ts.s2End),
+    step2_checklist:`${S.checks.filter(Boolean).length}/7`,step2_missed:missed.length>0?missed.join(','):'（なし）',
+    step2_start_gps:gpsStr(g.s2Start),
+    'check1_駐車受付':S.checkTimes[0]?fmtHMS(S.checkTimes[0]):'未完了',
+    'check2_回収物確認':S.checkTimes[1]?fmtHMS(S.checkTimes[1]):'未完了',
+    'check3_回収作業':S.checkTimes[2]?fmtHMS(S.checkTimes[2]):'未完了',
+    'check4_清掃':S.checkTimes[3]?fmtHMS(S.checkTimes[3]):'未完了',
+    'check5_最終確認':S.checkTimes[4]?fmtHMS(S.checkTimes[4]):'未完了',
+    'check6_マニフェスト処理':S.checkTimes[5]?fmtHMS(S.checkTimes[5]):'未完了',
+    'check7_日報入力':S.checkTimes[6]?fmtHMS(S.checkTimes[6]):'未完了',
+    step3_start:fmt(ts.s3Start),step3_end:fmt(ts.s3End),step3_duration:elMin(ts.s3Start,ts.s3End),
+    step3_start_gps:gpsStr(g.s3Start),
+    step4_volume:S.cbm,step4_weight:S.kg,
+    step4_start_gps:gpsStr(g.s4Start),
+    // 他社処分場は配列で送信（最大3件）
+    other_sites:(S.otherSites||[]).map((site,i)=>({
+      index: i+1,
+      name:  site.name||`他社処分場${i+1}`,
+      volume: site.cbm,
+      weight: site.kg,
+      depart_time: fmt(site.departTime),
+      arrive_time: fmt(site.arriveTime),
+      leave_time:  site.leaveTime?fmt(site.leaveTime):'',
+      travel_min:  elMin(site.departTime, site.arriveTime),
+      unload_min:  site.leaveTime?elMin(site.arriveTime,site.leaveTime):0,
+      gps_depart:  site.gpsDepart&&site.gpsDepart.lat?`${site.gpsDepart.lat.toFixed(5)},${site.gpsDepart.lng.toFixed(5)}`:'',
+      gps_arrive:  site.gpsArrive&&site.gpsArrive.lat?`${site.gpsArrive.lat.toFixed(5)},${site.gpsArrive.lng.toFixed(5)}`:''
+    })),
+    other_sites_count: (S.otherSites||[]).length,
+    total_duration:totalMin,total_duration_hm:minToHM(totalMin),skip_step6:S.skipStep6,
+    photos:S.photos||[],
+    memo:S.memo||''
+  };
+}
+
+
+// ── 写真添付機能 ──
+function triggerPhotoInput(idx){
+  const inp=document.getElementById('photo-input-'+idx);
+  if(inp) inp.click();
+}
+
+function handlePhotoSelect(event,idx){
+  const files=Array.from(event.target.files);
+  if(!files.length) return;
+  // 最大5枚まで
+  const remaining=5-(S.photos||[]).length;
+  if(remaining<=0){ alert('写真は最大5枚までです。'); return; }
+  const toAdd=files.slice(0,remaining);
+  let loaded=0;
+  toAdd.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      if(!S.photos) S.photos=[];
+      S.photos.push({data:e.target.result,name:file.name,type:file.type});
+      loaded++;
+      if(loaded===toAdd.length){
+        renderPhotoPreview(idx); saveLocal();
+        // 写真追加後もs4解放チェック（全チェック済みなら解放）
+        const c4=document.getElementById('card-s4');
+        if(S.checks.every(Boolean) && c4 && c4.classList.contains('locked')){
+          tlSetState('s4','active');
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  // input をリセット（同じファイルを再選択できるよう）
+  event.target.value='';
+}
+
+function removePhoto(idx,photoIdx){
+  if(!S.photos) return;
+  S.photos.splice(photoIdx,1);
+  renderPhotoPreview(idx);
+  saveLocal();
+}
+
+function renderPhotoPreview(checkItemIdx){
+  const wrap=document.getElementById('photo-preview-'+checkItemIdx);
+  const cnt=document.getElementById('photo-count-'+checkItemIdx);
+  if(!wrap) return;
+  const photos=S.photos||[];
+  if(photos.length===0){
+    wrap.innerHTML='';
+    if(cnt) cnt.textContent='';
+    return;
+  }
+  wrap.innerHTML=photos.map((p,i)=>`
+    <div class="photo-thumb">
+      <img src="${p.data}" alt="写真${i+1}" onclick="openImgModal(${i})" loading="lazy">
+      <button class="photo-del" onclick="removePhoto(${checkItemIdx},${i})">✕</button>
+    </div>`).join('');
+  if(cnt) cnt.textContent=`${photos.length}枚添付済み（最大5枚）`;
+}
+
+// ── 画像モーダル ──
+let _modalPhotos=[];
+let _modalIdx=0;
+
+function openImgModal(idx, photosArray){
+  _modalPhotos = photosArray || S.photos || [];
+  _modalIdx = idx;
+  _renderImgModal();
+  document.getElementById('img-modal').classList.add('active');
+}
+
+function _renderImgModal(){
+  const img=document.getElementById('img-modal-img');
+  const counter=document.getElementById('img-counter');
+  const prev=document.getElementById('img-prev');
+  const next=document.getElementById('img-next');
+  if(!_modalPhotos.length) return;
+  const p=_modalPhotos[_modalIdx];
+  img.src=typeof p==='string'?p:p.data;
+  counter.textContent=`${_modalIdx+1} / ${_modalPhotos.length}`;
+  prev.style.display=_modalPhotos.length>1?'flex':'none';
+  next.style.display=_modalPhotos.length>1?'flex':'none';
+}
+
+function imgModalNav(dir){
+  _modalIdx=(_modalIdx+dir+_modalPhotos.length)%_modalPhotos.length;
+  _renderImgModal();
+}
+
+function closeImgModal(){
+  document.getElementById('img-modal').classList.remove('active');
+  document.getElementById('img-modal-img').src='';
+}
+
+function imgModalBgClick(e){
+  if(e.target===document.getElementById('img-modal')) closeImgModal();
+}
+
+
+// ── Fixed bottom bar（タイムライン版では非表示） ──
+const STEP_BTNS = {};
+function updateFixedBtn(step){
+  const bar=document.getElementById('fixed-bottom-bar');
+  if(bar) bar.classList.remove('visible');
+}
+
+// ── 数値修正セクション 開閉 ──
+function toggleEditSection(){
+  const body = document.getElementById('edit-body');
+  const icon = document.getElementById('edit-toggle-icon');
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if(icon) icon.classList.toggle('open', !isOpen);
+}
+
+// ── メモ欄 ──
+function toggleMemoSection(){
+  const body = document.getElementById('memo-body');
+  const icon = document.getElementById('memo-toggle-icon');
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if(icon) icon.classList.toggle('open', !isOpen);
+}
+function onMemoInput(el){
+  S.memo = el.value;
+  const cnt = document.getElementById('memo-count');
+  if(cnt) cnt.textContent = el.value.length + ' / 200';
+  saveLocal();
+}
+
+// ── CSVダウンロード（F） ──
+function downloadCSV(){
+  try{
+    if(!matrixRecords||matrixRecords.length===0){
+      showToast('⚠️ 送信データがありません');return;
+    }
+    const escape=v=>{
+      const s=String(v===null||v===undefined?'':v);
+      return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;
+    };
+    const headers=[
+      '送信日時','回収日','ドライバー','顧客名','時間超過',
+      '①出発時刻','①到着時刻','①移動分',
+      '②回収開始','②回収終了','②作業分','②完了数','②未完了',
+      '③出発','③到着','③移動分',
+      '④数量㎥','④重量kg',
+      '他社件数','他社処分場詳細',
+      '総時間(分)','総時間','メモ'
+    ];
+    const rows=[headers.join(',')];
+    matrixRecords.forEach(r=>{
+      const sites=(r.other_sites||[]).map(s=>`${s.name||''}:${s.volume}㎥/${s.weight}kg`).join('|');
+      const row=[
+        r.timestamp||'', r.operation_date||'', r.driver_name||'', r.customer_name||'',
+        r.overtime_flag||'',
+        r.step1_start||'', r.step1_end||'', r.step1_duration||0,
+        r.step2_start||'', r.step2_end||'', r.step2_duration||0,
+        r.step2_checklist||'', r.step2_missed||'',
+        r.step3_start||'', r.step3_end||'', r.step3_duration||0,
+        r.step4_volume||0, r.step4_weight||0,
+        r.other_sites_count||0, sites,
+        r.total_duration||0, r.total_duration_hm||'',
+        r.memo||''
+      ].map(escape).join(',');
+      rows.push(row);
+    });
+    const bom='\uFEFF'; // Excel用BOM
+    const blob=new Blob([bom+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const d=new Date();
+    const ymd=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    a.href=url;a.download=`回収実績_${ymd}.csv`;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
+    showToast('📥 CSVをダウンロードしました');
+  }catch(e){ showToast('⚠️ CSVの生成に失敗しました'); }
+}
+
+// ── 送信履歴（H） ──
+const LS_HISTORY = 'haikibutsu_send_history';
+
+function saveHistory(payload){
+  try{
+    const raw=localStorage.getItem(LS_HISTORY);
+    const list=raw?JSON.parse(raw):[];
+    list.unshift({
+      id: Date.now(),
+      ts: payload.timestamp||new Date().toISOString(),
+      date: payload.operation_date||'',
+      driver: payload.driver_name||'',
+      customer: payload.customer_name||'',
+      total_hm: payload.total_duration_hm||'',
+      total_min: payload.total_duration||0,
+      cbm: payload.step4_volume||0,
+      kg: payload.step4_weight||0,
+      other_sites_count: payload.other_sites_count||0,
+      memo: payload.memo||'',
+      overtime: payload.overtime_flag||''
+    });
+    // 最大30件
+    if(list.length>30) list.length=30;
+    localStorage.setItem(LS_HISTORY, JSON.stringify(list));
+  }catch(e){}
+}
+
+function getHistory(){
+  try{
+    const raw=localStorage.getItem(LS_HISTORY);
+    return raw?JSON.parse(raw):[];
+  }catch(e){ return []; }
+}
+
+function renderHistory(){
+  const container=document.getElementById('history-list');
+  if(!container) return;
+  const list=getHistory();
+  if(list.length===0){
+    container.innerHTML='<div style="text-align:center;padding:20px;font-size:14px;color:var(--text-3);">送信履歴はありません</div>';
+    return;
+  }
+  container.innerHTML=list.map((r,i)=>`
+    <div style="border-bottom:1px solid var(--border);padding:12px 0;" id="hist-item-${r.id}">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleHistDetail(${r.id})">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text);">${r.customer}</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px;">${r.date} ／ ${r.driver} ／ ${r.total_hm}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          ${r.overtime==='超過あり'?'<span style="font-size:11px;background:var(--red-l);color:var(--red);padding:2px 8px;border-radius:999px;font-weight:600;">超過</span>':''}
+          <span style="font-size:18px;color:var(--text-3);" id="hist-arrow-${r.id}">›</span>
+        </div>
+      </div>
+      <div id="hist-detail-${r.id}" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:var(--rsm);font-size:13px;color:var(--text-2);">
+        <div>📦 自社処分場: ${r.cbm}㎥ / ${r.kg}kg</div>
+        ${r.other_sites_count>0?`<div>🏭 他社処分場: ${r.other_sites_count}件</div>`:''}
+        ${r.memo?`<div>💬 ${r.memo}</div>`:''}
+        <div style="margin-top:8px;">
+          <button onclick="deleteHistory(${r.id})" style="font-size:12px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;">🗑 削除</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleHistDetail(id){
+  const det=document.getElementById('hist-detail-'+id);
+  const arr=document.getElementById('hist-arrow-'+id);
+  if(!det) return;
+  const open=det.style.display==='block';
+  det.style.display=open?'none':'block';
+  if(arr) arr.textContent=open?'›':'⌄';
+}
+
+function deleteHistory(id){
+  try{
+    const list=getHistory().filter(r=>r.id!==id);
+    localStorage.setItem(LS_HISTORY,JSON.stringify(list));
+    renderHistory();
+  }catch(e){}
+}
+
+function clearAllHistory(){
+  if(!confirm('送信履歴をすべて削除しますか？')) return;
+  try{ localStorage.removeItem(LS_HISTORY); renderHistory(); }catch(e){}
+}
+
+// ── 数量直接入力（J） ──
+function openQtyInput(type, displayId, adjFn){
+  const displayEl = document.getElementById(displayId);
+  if(!displayEl) return;
+  // すでにinputが開いていれば閉じる
+  const existing = displayEl.parentNode.querySelector('.qty-direct-inp');
+  if(existing){ existing.remove(); displayEl.style.display=''; return; }
+  const current = type==='cbm' ? S.cbm : S.kg;
+  displayEl.style.display='none';
+  const inp = document.createElement('input');
+  inp.type='number';
+  inp.className='qty-direct-inp';
+  inp.value = type==='cbm' ? current.toFixed(1) : current;
+  inp.min='0';
+  inp.step = type==='cbm' ? '0.1' : '10';
+  inp.style.cssText='width:100%;font-size:44px;font-weight:200;text-align:center;padding:14px 0;background:var(--indigo-l);border-radius:10px;border:1.5px solid var(--indigo);color:var(--indigo);font-family:inherit;outline:none;letter-spacing:-.02em;';
+  const confirm = ()=>{
+    const v = Math.max(0, parseFloat(inp.value)||0);
+    if(type==='cbm'){ S.cbm=Math.round(v*10)/10; }
+    else { S.kg=Math.round(v); }
+    displayEl.textContent = type==='cbm' ? S.cbm.toFixed(1) : S.kg;
+    displayEl.style.display='';
+    inp.remove();
+    saveLocal();
+    vib(20);
+  };
+  inp.addEventListener('blur', confirm);
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key==='Done') confirm(); });
+  displayEl.parentNode.insertBefore(inp, displayEl.nextSibling);
+  setTimeout(()=>inp.focus(), 50);
+}
+
+// 他社処分場の直接入力
+function openQtyInputOther(siteIdx, type){
+  const site = S.otherSites[siteIdx];
+  if(!site) return;
+  const displayId = type==='cbm' ? 'qty2-cbm-'+siteIdx : 'qty2-kg-'+siteIdx;
+  const displayEl = document.getElementById(displayId);
+  if(!displayEl) return;
+  const existing = displayEl.parentNode.querySelector('.qty-direct-inp');
+  if(existing){ existing.remove(); displayEl.style.display=''; return; }
+  const current = type==='cbm' ? site.cbm : site.kg;
+  displayEl.style.display='none';
+  const inp = document.createElement('input');
+  inp.type='number';
+  inp.className='qty-direct-inp';
+  inp.value = type==='cbm' ? current.toFixed(1) : current;
+  inp.min='0'; inp.step = type==='cbm' ? '0.1' : '10';
+  inp.style.cssText='width:100%;font-size:44px;font-weight:200;text-align:center;padding:14px 0;background:var(--indigo-l);border-radius:10px;border:1.5px solid var(--indigo);color:var(--indigo);font-family:inherit;outline:none;letter-spacing:-.02em;';
+  const confirm = ()=>{
+    const v = Math.max(0, parseFloat(inp.value)||0);
+    if(type==='cbm'){ site.cbm=Math.round(v*10)/10; displayEl.textContent=site.cbm.toFixed(1); }
+    else { site.kg=Math.round(v); displayEl.textContent=site.kg; }
+    displayEl.style.display='';
+    inp.remove();
+    saveLocal();
+    vib(20);
+  };
+  inp.addEventListener('blur', confirm);
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter') confirm(); });
+  displayEl.parentNode.insertBefore(inp, displayEl.nextSibling);
+  setTimeout(()=>inp.focus(), 50);
+}
+// ── 送信 ──
+async function submitData(){
+  const payload=buildPayload();
+  addRecordToMatrix(payload);
+  document.getElementById('loading-screen').classList.add('active');
+  document.getElementById('btn-submit').disabled=true;
+  if(GAS_URL==='YOUR_GAS_URL_HERE'){await new Promise(r=>setTimeout(r,1500));saveHistory(payload);clearLocal();showDone();return;}
+  try{
+    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    saveHistory(payload);clearLocal();showDone();
+  }catch(err){
+    document.getElementById('loading-screen').classList.remove('active');
+    document.getElementById('btn-submit').disabled=false;
+    alert(`送信エラー:\n${err.message}\n\n電波の状態を確認してから再送信してください。\nデータはローカルに保存されています。`);
+  }
+}
+function showDone(){
+  document.getElementById('loading-screen').classList.remove('active');
+  document.getElementById('done-screen').classList.add('active');
+  document.getElementById('done-ts').textContent=fmtDT(now());
+  document.getElementById('done-url').textContent=GAS_URL==='YOUR_GAS_URL_HERE'?'（デモモード：実際には送信されていません）':GAS_URL;
+}
+
+
+
+// ── ドライバーリスト管理 ──
+function getDriverList(){
+  try{
+    const raw=localStorage.getItem(LS_DRIVER_LIST);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [...DEFAULT_DRIVERS];
+}
+function saveDriverList(list){
+  try{ localStorage.setItem(LS_DRIVER_LIST, JSON.stringify(list)); }catch(e){}
+}
+// トップ画面のドライバードロップダウンを再構築
+function buildDriverSelect(){
+  const sel=document.getElementById('driver-select');
+  if(!sel) return;
+  const current=sel.value;
+  const list=getDriverList();
+  sel.innerHTML='<option value="">選択してください</option>' +
+    list.map(d=>`<option value="${d}">${d}</option>`).join('');
+  if(current && list.includes(current)) sel.value=current;
+}
+// 管理者画面：ドライバーリスト描画
+function renderAdminDriverList(){
+  const container=document.getElementById('admin-driver-list');
+  if(!container) return;
+  const list=getDriverList();
+  container.innerHTML=list.map((name,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <input style="flex:1;padding:10px 12px;font-size:16px;font-weight:600;border-radius:var(--rsm);border:1.5px solid var(--border);font-family:inherit;outline:none;"
+        type="text" value="${name}" oninput="updateDriverName(${i},this.value)">
+      <button onclick="removeDriver(${i})" style="width:36px;height:36px;border-radius:50%;background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-size:18px;font-weight:700;flex-shrink:0;">×</button>
+    </div>`).join('');
+}
+function updateDriverName(idx,val){
+  const list=getDriverList();
+  list[idx]=val;
+  saveDriverList(list);
+  buildDriverSelect();
+}
+function removeDriver(idx){
+  const list=getDriverList();
+  list.splice(idx,1);
+  saveDriverList(list);
+  renderAdminDriverList();
+  buildDriverSelect();
+}
+function addDriver(){
+  const inp=document.getElementById('new-driver-input');
+  if(!inp||!inp.value.trim()) return;
+  const list=getDriverList();
+  list.push(inp.value.trim());
+  saveDriverList(list);
+  inp.value='';
+  renderAdminDriverList();
+  buildDriverSelect();
+}
+
+// ── 他社処分場リスト管理 ──
+function getOtherSiteList(){
+  try{
+    const raw=localStorage.getItem(LS_SITE_LIST);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [...DEFAULT_SITES];
+}
+function saveOtherSiteList(list){
+  try{ localStorage.setItem(LS_SITE_LIST, JSON.stringify(list)); }catch(e){}
+}
+
+// ドロップダウンを再構築（他社処分場選択モーダル用）
+function buildSiteSelect(selectId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const list = getOtherSiteList();
+  sel.innerHTML = '<option value="">選択してください</option>' +
+    list.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+// 管理者画面：リスト描画
+function renderAdminSiteList(){
+  const container = document.getElementById('admin-site-list');
+  if(!container) return;
+  const list = getOtherSiteList();
+  container.innerHTML = list.map((name,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
+      <input style="flex:1;padding:10px 12px;font-size:16px;font-weight:600;border-radius:var(--rsm);border:1.5px solid var(--border);font-family:inherit;outline:none;"
+        type="text" value="${name}" id="site-input-${i}" oninput="updateSiteName(${i},this.value)">
+      <button onclick="removeSite(${i})" style="width:36px;height:36px;border-radius:50%;background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-size:18px;font-weight:700;flex-shrink:0;">×</button>
+    </div>`).join('');
+}
+function updateSiteName(idx,val){
+  const list=getOtherSiteList();
+  list[idx]=val;
+  saveOtherSiteList(list);
+}
+function removeSite(idx){
+  const list=getOtherSiteList();
+  list.splice(idx,1);
+  saveOtherSiteList(list);
+  renderAdminSiteList();
+}
+function addSite(){
+  const inp=document.getElementById('new-site-input');
+  if(!inp||!inp.value.trim()) return;
+  const list=getOtherSiteList();
+  list.push(inp.value.trim());
+  saveOtherSiteList(list);
+  inp.value='';
+  renderAdminSiteList();
+}
+
+
+
+// ── スクロール制御：セクション先頭をスクロールエリアの最上部に表示 ──
+function scrollToCard(card){
+  try{
+    const container = document.getElementById('main-scroll');
+    if(!container || !card) return;
+    // screen-main が非表示の場合はスクロールしない（管理者画面など）
+    const screenMain = document.getElementById('screen-main');
+    if(!screenMain || !screenMain.classList.contains('active')) return;
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        try{
+          const sm = document.getElementById('screen-main');
+          if(!sm || !sm.classList.contains('active')) return;
+          const containerRect = container.getBoundingClientRect();
+          const cardRect      = card.getBoundingClientRect();
+          const targetScroll  = container.scrollTop + (cardRect.top - containerRect.top) - 12;
+          container.scrollTo({ top: Math.max(0, targetScroll), behavior:'smooth' });
+        }catch(e){}
+      });
+    });
+  }catch(e){}
+}
+
+// ── タイムライン制御 ──
+// ステップ定義
+const TL_STEPS = ['s1','s2','s3','s4','s5'];
+
+// セクションのロック/アクティブ/完了状態を更新
+function tlSetState(stepId, state){
+  const card = document.getElementById('card-'+stepId);
+  const node = document.getElementById('node-'+stepId);
+  const btn  = document.getElementById('btn-'+stepId);   // タブボタン
+  const row  = document.getElementById('row-'+stepId);   // 行ラッパー
+  if(!card) return;
+  card.classList.remove('locked','active','done');
+  if(node){ node.classList.remove('active','done'); }
+  if(row){ row.classList.remove('active-row','done'); }
+  if(btn){ btn.classList.remove('pending','done'); }
+
+  if(state==='locked'){
+    card.classList.add('locked');
+    if(btn) btn.classList.add('pending');
+  } else if(state==='active'){
+    card.classList.add('active');
+    if(node) node.classList.add('active');
+    if(row)  row.classList.add('active-row');
+    if(btn){ btn.classList.remove('pending'); }
+    // ※スクロールは各tlActionで明示的に行う（ここでは呼ばない）
+  } else if(state==='done'){
+    card.classList.add('done');
+    if(node) node.classList.add('done');
+    if(row)  row.classList.add('done');
+    if(btn){ btn.classList.add('done'); }
+  }
+}
+
+// 完了ノードも状態管理
+function tlSetEndState(state){
+  const card=document.getElementById('card-end');
+  const node=document.getElementById('node-end');
+  const btn =document.getElementById('btn-end');
+  if(!card) return;
+  card.classList.remove('locked','active','done');
+  if(node){ node.classList.remove('active','done'); }
+  if(state==='active'){
+    card.classList.add('active');
+    if(node) node.classList.add('active');
+    if(btn)  btn.classList.add('active-row');
+    // ※スクロールはdoFinishAll/tlOtherCompleteで明示的に行う
+  } else if(state==='done'){
+    card.classList.add('done');
+    if(node) node.classList.add('done');
+  } else {
+    card.classList.add('locked');
+    if(btn) btn.classList.remove('active-row');
+  }
+}
+
+// アクションボタン処理
+function tlAction(stepId){
+  const btn = document.getElementById('btn-'+stepId);
+  if(!btn || btn.classList.contains('done')) return;
+  const t = now();
+
+  vib(50);
+  if(stepId==='s2'){
+    // 顧客先到着 → チェックリストを開放
+    S.ts.s1End = S.ts.s2Start = t;
+    document.getElementById('time-s2').textContent = fmt(t);
+    tlSetState('s2','done');
+    showGpsBadge('gps-s2','s2Start');
+    tlSetState('s3','active');
+    S.currentStep=2;
+    setTimeout(()=>{ scrollToCard(document.getElementById('card-s3')); }, 60);
+    // チェックリストの写真エリアを初期化
+    renderPhotoPreview(1);
+    saveLocal();
+
+  } else if(stepId==='s4'){
+    // 処分場へ出発
+    S.ts.s2End = S.ts.s3Start = t;
+    document.getElementById('time-s4').textContent = fmt(t);
+    tlSetState('s4','done');
+    showGpsBadge('gps-s4','s3Start');
+    tlSetState('s5','active');
+    S.currentStep=4;
+    saveLocal();
+
+
+  } else if(stepId==='s5'){
+    // 自社処分場到着
+    S.ts.s3End = S.ts.s4Start = t;
+    document.getElementById('time-s5').textContent = fmt(t);
+    tlSetState('s5','done');
+    showGpsBadge('gps-s5','s4Start');
+    // 数量入力エリアを表示
+    const qw = document.getElementById('qty-wrap-s5');
+    if(qw){ qw.style.display='block'; }
+    S.currentStep=5;
+    saveLocal();
+    // qty展開後にcard-s5先頭へスクロール
+    setTimeout(()=>{ scrollToCard(document.getElementById('card-s5')); }, 60);
+  }
+  updateProgressFromStep(S.currentStep);
+}
+
+// 回収完了チェック（s3→s4 解放）
+function checkCollectionDone(){
+  // 写真必須チェック
+  if(!S.photos||S.photos.length===0) return;
+  // s4ボタンをアクティブに
+  tlSetState('s4','active');
+}
+
+// GPS バッジ表示ヘルパー
+function showGpsBadge(badgeId, gpsKey){
+  const badge=document.getElementById(badgeId);
+  if(badge) badge.style.display='inline-flex';
+  getGPS(g=>{
+    S.gps[gpsKey]=g;
+    if(badge){
+      if(g&&g.lat){badge.className='gps-badge gps-ok';badge.textContent='📍 '+g.lat.toFixed(4)+', '+g.lng.toFixed(4);}
+      else{badge.className='gps-badge gps-ng';badge.textContent='📍 位置情報なし';}
+    }
+    saveLocal();
+  });
+}
+
+// 他社処分場セクションを動的追加
+function addOtherSiteSection(siteIdx, siteName){
+  const area = document.getElementById('other-sites-area');
+  const secId = 'sec-other-'+siteIdx;
+  // 既存があればスキップ
+  if(document.getElementById(secId)) return;
+
+  const html = `
+  <div class="tl-section" id="${secId}">
+    <div class="tl-node active" id="node-other-${siteIdx}"></div>
+    <div class="tl-card-wrap active" id="card-other-${siteIdx}">
+      <div style="font-size:12px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">
+        他社処分場（${siteName}）
+      </div>
+      <div class="tl-action-row active-row" id="row-other-arr-${siteIdx}">
+        <button class="tl-tab-btn" id="btn-other-arr-${siteIdx}" onclick="tlOtherArrive(${siteIdx})">到着</button>
+        <div class="tl-time-info">
+          <div class="tl-time-info-label">到着時刻記録</div>
+          <div class="tl-time-info-val" id="time-other-arr-${siteIdx}">--:--</div>
+        </div>
+      </div>
+      <div id="gps-other-${siteIdx}" style="display:none;" class="gps-badge gps-ing">📍 位置取得中...</div>
+      <div id="qty-other-${siteIdx}" style="display:none;margin-top:14px;">
+        <div class="divider"></div>
+        <div class="qty-lbl">📦 数量（立米）</div>
+        <div class="qty-dsp" onclick="openQtyInputOther(${siteIdx},'cbm')" style="cursor:pointer;"><span id="qty2-cbm-${siteIdx}">0.0</span><span class="qty-unit">㎥</span></div>
+        <div class="qty-grid">
+          <button class="qb qb-s" onclick="adjQtyOther(${siteIdx},'cbm',-1)">－1 <span class="qb-sub">㎥</span></button>
+          <button class="qb qb-a" onclick="adjQtyOther(${siteIdx},'cbm',1)">＋1 <span class="qb-sub">㎥</span></button>
+          <button class="qb qb-s" style="font-size:17px;padding:14px 6px;" onclick="adjQtyOther(${siteIdx},'cbm',-0.1)">－0.1</button>
+          <button class="qb qb-a" style="font-size:17px;padding:14px 6px;" onclick="adjQtyOther(${siteIdx},'cbm',0.1)">＋0.1</button>
+        </div>
+        <div class="divider"></div>
+        <div class="qty-lbl">⚖️ 重量（kg）</div>
+        <div class="qty-dsp" onclick="openQtyInputOther(${siteIdx},'kg')" style="cursor:pointer;"><span id="qty2-kg-${siteIdx}">0</span><span class="qty-unit">kg</span></div>
+        <div class="qty-grid">
+          <button class="qb qb-s" onclick="adjQtyOther(${siteIdx},'kg',-100)">－100 <span class="qb-sub">kg</span></button>
+          <button class="qb qb-a" onclick="adjQtyOther(${siteIdx},'kg',100)">＋100 <span class="qb-sub">kg</span></button>
+          <button class="qb qb-s" style="font-size:17px;padding:14px 6px;" onclick="adjQtyOther(${siteIdx},'kg',-10)">－10</button>
+          <button class="qb qb-a" style="font-size:17px;padding:14px 6px;" onclick="adjQtyOther(${siteIdx},'kg',10)">＋10</button>
+        </div>
+        <div class="divider"></div>
+        <button class="btn btn-s" style="font-size:17px;padding:16px;" onclick="tlOtherComplete(${siteIdx}, this)">荷下ろし完了</button>
+      </div>
+    </div>
+  </div>`;
+  area.insertAdjacentHTML('beforeend', html);
+  // 完了ノードを末尾に移す
+  const endSec = document.getElementById('sec-end');
+  area.parentNode.insertBefore(endSec, null); // 末尾に再配置
+  setTimeout(()=>{ const c=document.getElementById('card-other-'+siteIdx); if(c) scrollToCard(c); },150);
+}
+
+// 他社処分場 到着記録
+function tlOtherArrive(siteIdx){
+  const site = S.otherSites[siteIdx];
+  if(!site) return;
+  const t = now();
+  site.arriveTime = t;
+  document.getElementById('time-other-arr-'+siteIdx).textContent = fmt(t);
+  const btn = document.getElementById('btn-other-arr-'+siteIdx);
+  if(btn){ btn.classList.add('done'); }
+  const gpsBadge = document.getElementById('gps-other-'+siteIdx);
+  if(gpsBadge) gpsBadge.style.display='inline-flex';
+  getGPS(g=>{ site.gpsArrive=g; if(gpsBadge){ if(g&&g.lat){gpsBadge.className='gps-badge gps-ok';gpsBadge.textContent='📍 '+g.lat.toFixed(4)+', '+g.lng.toFixed(4);}else{gpsBadge.className='gps-badge gps-ng';gpsBadge.textContent='📍 位置情報なし';} } saveLocal(); });
+  // 数量入力を表示
+  const qw=document.getElementById('qty-other-'+siteIdx);
+  if(qw) qw.style.display='block';
+  saveLocal();
+}
+
+// 他社処分場 数量調整（動的インデックス対応）
+function adjQtyOther(siteIdx, t, d){
+  const site = S.otherSites[siteIdx];
+  if(!site) return;
+  if(t==='cbm'){
+    site.cbm=Math.max(0,Math.round((site.cbm+d)*10)/10);
+    const el=document.getElementById('qty2-cbm-'+siteIdx);
+    if(el) el.textContent=site.cbm.toFixed(1);
+  } else {
+    site.kg=Math.max(0,site.kg+d);
+    const el=document.getElementById('qty2-kg-'+siteIdx);
+    if(el) el.textContent=site.kg;
+  }
+  saveLocal();
+}
+
+// 他社処分場 荷下ろし完了
+function tlOtherComplete(siteIdx, btn){
+  const site = S.otherSites[siteIdx];
+  if(!site) return;
+  site.leaveTime = now();
+  getGPS(g=>{ site.gpsLeave=g; saveLocal(); });
+  // 荷下ろし完了ボタンを無効化
+  if(btn){
+    btn.disabled=true;
+    btn.style.background='var(--surface-2)';
+    btn.style.color='var(--text-3)';
+    btn.style.cursor='default';
+    btn.textContent='✅ 荷下ろし完了済み';
+  }
+  // カードを完了状態に
+  const card = document.getElementById('card-other-'+siteIdx);
+  if(card){ card.classList.remove('active'); card.classList.add('done'); }
+  const node = document.getElementById('node-other-'+siteIdx);
+  if(node){ node.classList.remove('active'); node.classList.add('done'); }
+  // 次の処分場 or 完了へ
+  if(S.otherSites.length < 3){
+    document.getElementById('modal-finish-num').textContent = S.otherSites.length+1;
+    document.getElementById('modal-finish').classList.add('active');
+  } else {
+    tlSetEndState('active');
+    setTimeout(()=>{ scrollToCard(document.getElementById('card-end')); }, 150);
+  }
+  saveLocal();
+}
+
+// 実績確認へ
+function goToResult(){
+  buildResult();
+  showScreen('screen-result');
+  document.getElementById('header-step').textContent='実績確認';
+}
+
+// setProgress のラッパー（タイムライン版ではstep数から進捗バーを更新）
+function updateProgressFromStep(step){
+  // 内部step → 表示用フェーズへマッピング
+  // step1=出発済(顧客先へ移動中→①待ち) / step2=顧客先到着① / step3=回収作業② /
+  // step4=処分場へ出発③ / step5=自社処分場④ / 99=完了⑤
+  let phase, phaseName;
+  if(step<=1){ phase=1; phaseName='顧客先 到着'; }      // 出発直後＝①顧客先到着待ち
+  else if(step===2){ phase=1; phaseName='顧客先 到着'; }
+  else if(step===3){ phase=2; phaseName='回収作業'; }
+  else if(step===4){ phase=3; phaseName='処分場へ出発'; }
+  else if(step===5){ phase=4; phaseName='自社処分場'; }
+  else { phase=5; phaseName='実績確認・送信'; }
+
+  // 5分割バーを更新
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('ps'+i);
+    if(!el)continue;
+    el.classList.remove('done','active');
+    if(i<phase) el.classList.add('done');
+    else if(i===phase) el.classList.add('active');
+  }
+  const fracEl=document.getElementById('prog-fraction');
+  if(fracEl) fracEl.textContent = phase+' / 5';
+  const nameEl=document.getElementById('prog-name');
+  if(nameEl) nameEl.textContent = phaseName;
+  const numEl=document.getElementById('prog-num');
+  if(numEl) numEl.textContent = phase;
+}
+
+// ── PIN認証 ──
+function openAdminAuth(){
+  pinBuf='';
+  updatePinDisplay();
+  const err=document.getElementById('pin-error');
+  if(err) err.textContent='';
+  showScreen('screen-admin-auth');
+  setProgress(0);
+}
+function pinInput(n){ vib(10);if(pinBuf.length>=4)return;pinBuf+=n;updatePinDisplay();if(pinBuf.length===4)setTimeout(pinConfirm,200);}
+function pinClear(){
+  pinBuf='';
+  updatePinDisplay();
+  const err=document.getElementById('pin-error');
+  if(err) err.textContent='';
+}
+function pinDelete(){
+  if(pinBuf.length>0) pinBuf=pinBuf.slice(0,-1);
+  updatePinDisplay();
+}
+function updatePinDisplay(){
+  for(let i=0;i<4;i++){
+    const dot=document.getElementById('pd-'+i);
+    if(!dot) continue;
+    dot.classList.toggle('filled', i<pinBuf.length);
+    dot.classList.remove('error');
+  }
+  const err=document.getElementById('pin-error');
+  if(err && pinBuf.length>0) err.textContent='';
+}
+function pinConfirm(){
+  if(pinBuf===ADMIN_PIN){document.getElementById('pin-error').style.display='none';renderMatrix();showScreen('screen-admin');setProgress(0);}
+  else{
+    // エラー：ドットを赤く点滅させてリセット
+    for(let i=0;i<4;i++){
+      const dot=document.getElementById('pd-'+i);
+      if(dot){ dot.classList.add('filled','error'); }
+    }
+    vib([100,50,100]);
+    const err=document.getElementById('pin-error');
+    if(err) err.textContent='パスワードが違います';
+    setTimeout(()=>{
+      pinBuf='';
+      updatePinDisplay();
+    }, 600);
+  }
+}
+
+// ── マトリクス ──
+const matrixRecords=[
+  {
+    operation_date:'2026-06-19', driver_name:'阿部 凌太', customer_name:'山田金属（株）',
+    overtime_flag:'正常',
+    step1_start:'08:00', step1_end:'08:22', step1_duration:22, step1_start_gps:'38.26820,140.87240',
+    step2_start:'08:22', step2_end:'10:05', step2_duration:103, step2_checklist:'7/7',
+    step2_missed:'（なし）', step2_start_gps:'38.27100,140.87600',
+    'check1_駐車受付':'08:22:30','check2_回収物確認':'08:35:10','check3_回収作業':'09:10:45',
+    'check4_清掃':'09:40:20','check5_最終確認':'09:55:00','check6_マニフェスト処理':'10:00:30','check7_日報入力':'10:05:00',
+    step3_start:'10:05', step3_end:'10:28', step3_duration:23, step3_start_gps:'38.27100,140.87600',
+    step4_volume:3.5, step4_weight:1200, step4_start_gps:'38.25500,140.86200',
+    other_sites:[
+      {index:1, name:'鈴木工業', volume:1.5, weight:500,
+       depart_time:'10:28', arrive_time:'10:43', leave_time:'11:05',
+       travel_min:15, unload_min:22, gps_depart:'38.25500,140.86200', gps_arrive:'38.24800,140.85900'}
+    ],
+    memo:'積み残しなし。スムーズに完了。', other_sites_count:1, total_duration:185, total_duration_hm:'3時間5分',
+    skip_step6:false, photos:[]
+  },
+  {
+    operation_date:'2026-06-19', driver_name:'秋元 弘樹', customer_name:'東北製紙（株）',
+    overtime_flag:'超過あり',
+    step1_start:'08:05', step1_end:'08:35', step1_duration:30, step1_start_gps:'38.26820,140.87240',
+    step2_start:'08:35', step2_end:'11:10', step2_duration:155, step2_checklist:'6/7',
+    step2_missed:'日報入力', step2_start_gps:'38.28500,140.88900',
+    'check1_駐車受付':'08:35:40','check2_回収物確認':'08:50:00','check3_回収作業':'09:45:20',
+    'check4_清掃':'10:30:00','check5_最終確認':'10:55:10','check6_マニフェスト処理':'11:08:00','check7_日報入力':'未完了',
+    step3_start:'11:10', step3_end:'11:45', step3_duration:35, step3_start_gps:'38.28500,140.88900',
+    step4_volume:5.0, step4_weight:2100, step4_start_gps:'38.25500,140.86200',
+    other_sites:[
+      {index:1, name:'青南商事', volume:2.0, weight:800,
+       depart_time:'11:45', arrive_time:'12:05', leave_time:'12:30',
+       travel_min:20, unload_min:25, gps_depart:'38.25500,140.86200', gps_arrive:'38.24800,140.85900'}
+    ],
+    memo:'日報入力を忘れた。後日対応予定。', other_sites_count:1, total_duration:265, total_duration_hm:'4時間25分',
+    skip_step6:false, photos:[]
+  },
+  {
+    operation_date:'2026-06-20', driver_name:'阿部 凌太', customer_name:'仙台リサイクル工業',
+    overtime_flag:'超過あり',
+    step1_start:'08:00', step1_end:'08:18', step1_duration:18, step1_start_gps:'38.26820,140.87240',
+    step2_start:'08:18', step2_end:'11:50', step2_duration:212, step2_checklist:'7/7',
+    step2_missed:'（なし）', step2_start_gps:'38.30200,140.91000',
+    'check1_駐車受付':'08:18:10','check2_回収物確認':'08:30:00','check3_回収作業':'10:10:00',
+    'check4_清掃':'11:00:30','check5_最終確認':'11:30:00','check6_マニフェスト処理':'11:44:10','check7_日報入力':'11:50:00',
+    step3_start:'11:50', step3_end:'12:18', step3_duration:28, step3_start_gps:'38.30200,140.91000',
+    step4_volume:6.0, step4_weight:2800, step4_start_gps:'38.25500,140.86200',
+    memo:'', other_sites:[], other_sites_count:0,
+    total_duration:258, total_duration_hm:'4時間18分',
+    skip_step6:true, photos:[]
+  }
+];
+function addRecordToMatrix(p){matrixRecords.push(p);}
+
+// GPS 文字列→マップURL
+function gpsToURL(str){if(!str||str==='取得なし'||str.indexOf(',')===-1)return'';const parts=str.split(',');if(parts.length<2)return'';return`https://www.google.com/maps?q=${parts[0].trim()},${parts[1].trim()}`;}
+
+const MX_ROWS=[
+  {k:'info',    l:'回収日 / ドライバー',      sec:false},
+  {k:'s1dep',   l:'① 出発（事業所）',         sec:false},
+  {k:'s1arr',   l:'① 到着（顧客先）',         sec:false},
+  {k:'s1gps',   l:'　GPS（出発時）',           sec:false},
+  {k:'sec2',    l:'② 回収作業',               sec:true},
+  {k:'c1',      l:'　駐車・受付',              sec:false},
+  {k:'c2',      l:'　回収物確認',              sec:false},
+  {k:'photo',   l:'　📷 添付写真',             sec:false},
+  {k:'c3',      l:'　回収作業',               sec:false},
+  {k:'c4',      l:'　清掃',                   sec:false},
+  {k:'c5',      l:'　最終確認',               sec:false},
+  {k:'c6',      l:'　マニフェスト処理',        sec:false},
+  {k:'c7',      l:'　日報入力',               sec:false},
+  {k:'s2t',     l:'② 回収 所要時間',          sec:false},
+  {k:'s2gps',   l:'　GPS（顧客先）',           sec:false},
+  {k:'s3',      l:'③ 処分場 到着・移動',       sec:false},
+  {k:'s4',      l:'④ 自社処分場 荷下ろし量',  sec:false},
+  {k:'s4gps',   l:'　GPS（自社処分場）',       sec:false},
+  {k:'other',   l:'他社処分場 一覧',           sec:false},
+  {k:'total',   l:'トータル所要時間',          sec:false},
+  {k:'ot',      l:'12:00 超過',               sec:false},
+  {k:'memo',    l:'💬 メモ',                  sec:false},
+];
+function cellV(r,k){
+  const ml=str=>{const u=gpsToURL(str);return u?`<a href="${u}" target="_blank" style="color:var(--indigo);font-size:12px;text-decoration:none;">🗺 地図</a>`:`<span style="font-size:12px;color:var(--text-3);">-</span>`;};
+  // 写真セル
+  if(k==='photo'){
+    const photos=r.photos||[];
+    if(!photos.length) return '<span style="font-size:12px;color:var(--text-3);">なし</span>';
+    const recIdx=matrixRecords.indexOf(r);
+    return photos.slice(0,3).map((p,i)=>{
+      const src=typeof p==='string'?p:p.data;
+      return `<img class="mx-thumb" src="${src}" onclick="openImgModal(${i},matrixRecords[${recIdx}].photos)" alt="写真${i+1}">`;
+    }).join('')+(photos.length>3?`<span style="font-size:11px;color:var(--text-3);margin-left:4px;">+${photos.length-3}</span>`:'');
+  }
+  switch(k){
+    case 'info':  return `${r.operation_date}<br><span style="color:#818cf8;font-weight:700;">${r.driver_name}</span>`;
+    case 's1dep': return r.step1_start;
+    case 's1arr': return `${r.step1_end}<br><span style="font-size:12px;color:var(--text-3);">${r.step1_duration}分</span>`;
+    case 's1gps': return ml(r.step1_start_gps);
+    case 'sec2':  return r.step2_checklist;
+    case 'c1':    return r['check1_駐車受付'];
+    case 'c2':    return r['check2_回収物確認'];
+    case 'c3':    return r['check3_回収作業'];
+    case 'c4':    return r['check4_清掃'];
+    case 'c5':    return r['check5_最終確認'];
+    case 'c6':    return r['check6_マニフェスト処理'];
+    case 'c7':    return r['check7_日報入力'];
+    case 's2t':   return `<strong style="font-size:16px;">${r.step2_duration}分</strong>`;
+    case 's2gps': return ml(r.step2_start_gps);
+    case 's3':    return `${r.step3_end||'--:--'}<br><span style="font-size:12px;color:var(--text-3);">${r.step3_duration}分</span>`;
+    case 's4':    return `${r.step4_volume}㎥<br>${r.step4_weight}kg`;
+    case 's4gps': return ml(r.step4_start_gps);
+    case 'other': {
+      const sites=r.other_sites||[];
+      if(!sites.length) return '<span style="font-size:12px;color:var(--text-3);">なし（直帰）</span>';
+      return sites.filter(s=>s.volume>0||s.weight>0).map((s,i)=>{
+        const label=s.name?`${s.name}`:`${i+1}件目`;
+        return `<div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:2px;">🏭 ${label}</div><div style="font-size:13px;">${s.arrive_time}着 / ${s.volume}㎥ ${s.weight}kg</div>`;
+      }).join('<div style="height:4px;"></div>')||'<span style="font-size:12px;color:var(--text-3);">入力なし</span>';
+    }
+    case 'total': return `<strong>${r.total_duration_hm||r.total_duration+'分'}</strong>`;
+    case 'ot':    return r.overtime_flag==='超過あり'?'⚠️ 超過':'✓ 正常';
+    case 'memo':
+      return r.memo
+        ? `<span style="font-size:12px;color:var(--text);white-space:pre-wrap;">${r.memo}</span>`
+        : '<span style="font-size:12px;color:var(--text-3);">-</span>';
+    default:      return '-';
+  }
+}
+function cellC(r,k){
+  if(k==='ot'&&r.overtime_flag==='超過あり') return 'c-ov';
+  if(k==='ot') return 'c-ok';
+  if(k==='c7'&&r['check7_日報入力']==='未完了') return 'c-ov';
+  return '';
+}
+function renderMatrix(){
+  const head=document.getElementById('matrix-head'),body=document.getElementById('matrix-body');
+  head.innerHTML=`<th class="sc">項目</th>${matrixRecords.map(r=>`<th style="text-align:center;min-width:130px;">${r.customer_name}</th>`).join('')}`;
+  body.innerHTML=MX_ROWS.map(row=>`<tr class="${row.sec?'c-sec':''}"><td class="sc">${row.l}</td>${matrixRecords.map(r=>`<td style="text-align:center;" class="${cellC(r,row.k)}">${cellV(r,row.k)}</td>`).join('')}</tr>`).join('');
+}
+</script>
+
+<!-- 画像フルスクリーンモーダル -->
+<div class="img-modal" id="img-modal" onclick="imgModalBgClick(event)">
+  <div class="img-modal-inner" id="img-modal-inner">
+    <img id="img-modal-img" src="" alt="現場写真">
+    <button class="img-modal-close" onclick="closeImgModal()">✕</button>
+    <button class="img-modal-nav img-modal-prev" id="img-prev" onclick="imgModalNav(-1)">‹</button>
+    <button class="img-modal-nav img-modal-next" id="img-next" onclick="imgModalNav(1)">›</button>
+    <div class="img-modal-counter" id="img-counter"></div>
+  </div>
+</div>
+
+
+
+<!-- 他社処分場選択モーダル -->
+<div class="overlay" id="modal-site-select">
+  <div class="bsheet"><div class="bhandle"></div>
+    <div class="mt">🏭 処分場を選択</div>
+    <div class="mb" style="margin-bottom:12px;"><span id="modal-site-num">1</span>件目の他社処分場を選択してください</div>
+    <select class="fsel" id="site-select-dropdown" style="margin-bottom:20px;font-size:17px;">
+      <option value="">選択してください</option>
+    </select>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-p" style="font-size:17px;padding:17px;" onclick="confirmSiteSelect()">
+        この処分場へ移動する
+      </button>
+      <button class="btn btn-gh" style="font-size:15px;" onclick="closeModal('modal-site-select')">戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- Fixed Bottom Action Bar（全ステップ共通） -->
+<div class="fixed-bottom-bar" id="fixed-bottom-bar">
+  <button class="btn" id="fixed-bottom-btn" style="font-size:18px;padding:20px;"></button>
+</div>
+<div class="toast" id="app-toast"></div>
+</body>
+</html>
