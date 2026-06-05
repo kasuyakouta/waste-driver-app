@@ -2194,7 +2194,14 @@ async function submitData(){
   document.getElementById('btn-submit').disabled=true;
   if(GAS_URL==='YOUR_GAS_URL_HERE'){await new Promise(r=>setTimeout(r,1500));saveHistory(payload);clearLocal();showDone();return;}
   try{
-    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    // GASはプリフライト(OPTIONS)に非対応のため、text/plainで送信してCORSを回避
+    // （GAS側はe.postData.contentsをJSON.parseするので問題なし）
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload),
+      redirect:'follow'
+    });
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     saveHistory(payload);clearLocal();showDone();
   }catch(err){
