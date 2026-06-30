@@ -1272,8 +1272,10 @@ function autoResume(){
   const str=d.toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   const e1=document.getElementById('today-disp'),e2=document.getElementById('today-disp2');
   if(e1)e1.textContent=str;if(e2)e2.textContent=str;
-  // ドライバードロップダウンを構築
+  // ドライバードロップダウンを構築（ローカルキャッシュで即時表示 → GASから最新を取得して更新）
   buildDriverSelect();
+  syncDriverListFromGas();
+  syncSiteListFromGas();
   // 自動復元（バナー不要・即座に再開）
   autoResume();
 })();
@@ -2236,7 +2238,7 @@ function showDone(){
 
 
 
-// ── ドライバーリスト管理 ──
+// ── ドライバーリスト管理（GAS同期 + localStorageキャッシュ） ──
 function getDriverList(){
   try{
     const raw=localStorage.getItem(LS_DRIVER_LIST);
@@ -2244,8 +2246,39 @@ function getDriverList(){
   }catch(e){}
   return [...DEFAULT_DRIVERS];
 }
-function saveDriverList(list){
+function saveDriverListLocal(list){
   try{ localStorage.setItem(LS_DRIVER_LIST, JSON.stringify(list)); }catch(e){}
+}
+// GASへ保存（自動同期）。失敗してもローカルキャッシュは更新済みなので動作は継続。
+async function saveDriverList(list){
+  saveDriverListLocal(list);
+  if(GAS_URL==='YOUR_GAS_URL_HERE') return;
+  try{
+    await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'saveDrivers', list}),
+      redirect:'follow'
+    });
+  }catch(e){ console.warn('ドライバーリストのGAS保存に失敗:',e); }
+}
+// 起動時：GASから最新を取得してキャッシュを更新
+async function syncDriverListFromGas(){
+  if(GAS_URL==='YOUR_GAS_URL_HERE') return;
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'getDrivers'}),
+      redirect:'follow'
+    });
+    const data=await res.json();
+    if(data && data.status==='success' && Array.isArray(data.list)){
+      saveDriverListLocal(data.list);
+      buildDriverSelect();
+      renderAdminDriverList();
+    }
+  }catch(e){ console.warn('ドライバーリストのGAS取得に失敗:',e); }
 }
 // トップ画面のドライバードロップダウンを再構築
 function buildDriverSelect(){
@@ -2265,11 +2298,17 @@ function renderAdminDriverList(){
   container.innerHTML=list.map((name,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
       <input style="flex:1;padding:10px 12px;font-size:16px;font-weight:600;border-radius:var(--rsm);border:1.5px solid var(--border);font-family:inherit;outline:none;"
-        type="text" value="${name}" oninput="updateDriverName(${i},this.value)">
+        type="text" value="${name}" oninput="updateDriverNameLocal(${i},this.value)" onblur="commitDriverName(${i},this.value)">
       <button onclick="removeDriver(${i})" style="width:36px;height:36px;border-radius:50%;background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-size:18px;font-weight:700;flex-shrink:0;">×</button>
     </div>`).join('');
 }
-function updateDriverName(idx,val){
+// 入力中はローカルキャッシュのみ更新（GAS送信はblur時にまとめて行う）
+function updateDriverNameLocal(idx,val){
+  const list=getDriverList();
+  list[idx]=val;
+  saveDriverListLocal(list);
+}
+function commitDriverName(idx,val){
   const list=getDriverList();
   list[idx]=val;
   saveDriverList(list);
@@ -2293,7 +2332,7 @@ function addDriver(){
   buildDriverSelect();
 }
 
-// ── 他社処分場リスト管理 ──
+// ── 他社処分場リスト管理（GAS同期 + localStorageキャッシュ） ──
 function getOtherSiteList(){
   try{
     const raw=localStorage.getItem(LS_SITE_LIST);
@@ -2301,8 +2340,36 @@ function getOtherSiteList(){
   }catch(e){}
   return [...DEFAULT_SITES];
 }
-function saveOtherSiteList(list){
+function saveOtherSiteListLocal(list){
   try{ localStorage.setItem(LS_SITE_LIST, JSON.stringify(list)); }catch(e){}
+}
+async function saveOtherSiteList(list){
+  saveOtherSiteListLocal(list);
+  if(GAS_URL==='YOUR_GAS_URL_HERE') return;
+  try{
+    await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'saveSites', list}),
+      redirect:'follow'
+    });
+  }catch(e){ console.warn('処分場リストのGAS保存に失敗:',e); }
+}
+async function syncSiteListFromGas(){
+  if(GAS_URL==='YOUR_GAS_URL_HERE') return;
+  try{
+    const res=await fetch(GAS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'getSites'}),
+      redirect:'follow'
+    });
+    const data=await res.json();
+    if(data && data.status==='success' && Array.isArray(data.list)){
+      saveOtherSiteListLocal(data.list);
+      renderAdminSiteList();
+    }
+  }catch(e){ console.warn('処分場リストのGAS取得に失敗:',e); }
 }
 
 // ドロップダウンを再構築（他社処分場選択モーダル用）
@@ -2322,11 +2389,16 @@ function renderAdminSiteList(){
   container.innerHTML = list.map((name,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
       <input style="flex:1;padding:10px 12px;font-size:16px;font-weight:600;border-radius:var(--rsm);border:1.5px solid var(--border);font-family:inherit;outline:none;"
-        type="text" value="${name}" id="site-input-${i}" oninput="updateSiteName(${i},this.value)">
+        type="text" value="${name}" id="site-input-${i}" oninput="updateSiteNameLocal(${i},this.value)" onblur="commitSiteName(${i},this.value)">
       <button onclick="removeSite(${i})" style="width:36px;height:36px;border-radius:50%;background:var(--red-l);color:var(--red);border:none;cursor:pointer;font-size:18px;font-weight:700;flex-shrink:0;">×</button>
     </div>`).join('');
 }
-function updateSiteName(idx,val){
+function updateSiteNameLocal(idx,val){
+  const list=getOtherSiteList();
+  list[idx]=val;
+  saveOtherSiteListLocal(list);
+}
+function commitSiteName(idx,val){
   const list=getOtherSiteList();
   list[idx]=val;
   saveOtherSiteList(list);
@@ -2346,6 +2418,7 @@ function addSite(){
   inp.value='';
   renderAdminSiteList();
 }
+
 
 
 
@@ -2683,7 +2756,7 @@ function updatePinDisplay(){
   if(err && pinBuf.length>0) err.textContent='';
 }
 function pinConfirm(){
-  if(pinBuf===ADMIN_PIN){document.getElementById('pin-error').style.display='none';renderMatrix();showScreen('screen-admin');setProgress(0);}
+  if(pinBuf===ADMIN_PIN){document.getElementById('pin-error').style.display='none';renderMatrix();showScreen('screen-admin');setProgress(0);syncDriverListFromGas();syncSiteListFromGas();}
   else{
     // エラー：ドットを赤く点滅させてリセット
     for(let i=0;i<4;i++){
